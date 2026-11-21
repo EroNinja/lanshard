@@ -1,0 +1,3 @@
+2026-11-21 16:13:49,155 [gpu-badlink] INFO joined 127.0.0.1:60647 as gpu-badlink (NVIDIA GeForce RTX 4060 Laptop GPU, cuda)
+2026-11-21 16:14:08,337 [gpu-badlink] INFO profiling one layer of Qwen/Qwen2.5-1.5B-Instruct for 8s
+2026-11-21 16:14:48,491 [gpu-badlink] INFO plan v1 ready: layers 18-27 (loaded 10 in 2.9s)

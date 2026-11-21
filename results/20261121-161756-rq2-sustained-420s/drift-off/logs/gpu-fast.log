@@ -1,0 +1,4 @@
+2026-11-21 16:27:31,766 [gpu-fast] INFO joined 127.0.0.1:61187 as gpu-fast (NVIDIA GeForce RTX 4060 Laptop GPU, cuda)
+2026-11-21 16:27:50,195 [gpu-fast] INFO profiling one layer of Qwen/Qwen2.5-1.5B-Instruct for 8s
+2026-11-21 16:28:24,255 [gpu-fast] INFO plan v1 ready: layers 7-22 (loaded 16 in 2.5s)
+2026-11-21 16:30:24,280 [gpu-fast] INFO slowdown set to 2.50

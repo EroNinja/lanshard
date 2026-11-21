@@ -1,0 +1,28 @@
+{
+ "system": "B1-hf-single",
+ "model": "Qwen/Qwen2.5-1.5B-Instruct",
+ "n": 10,
+ "wall_s": 38.13156843185425,
+ "gen_tokens": 1055,
+ "throughput_tok_s": 27.66736442759792,
+ "tpot_ms": {
+  "p50": 36.201353312228434,
+  "p95": 40.62552798878063,
+  "p99": 41.10735962607644
+ },
+ "ttft_ms": {
+  "p50": 62.24524974822998,
+  "p99": 164.09802913665771
+ },
+ "peak_alloc_gb": 3.0153889656066895,
+ "config": {
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "n": 10,
+  "seed": 0,
+  "max_prompt": 1000,
+  "prompt_median": 300.0,
+  "max_out": 300,
+  "out_median": 120.0,
+  "device": "cuda"
+ }
+}

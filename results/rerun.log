@@ -1,0 +1,398 @@
+>> serve hetero3 memory r0
+2026-11-21 15:38:35,296 [coord] INFO coordinator up: control 127.0.0.1:51738, data 127.0.0.1:51736 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 15:38:38,381 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 15:38:38,547 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 15:38:38,551 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 15:38:55,591 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 6.863999995402992, '2': 8.45999998273328, '4': 9.142800001427531, '8': 11.20690000243485}, 't_prefill_ms_per_tok': 0.5433, 'mem_layer_mb': 178.5}
+2026-11-21 15:39:11,644 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.961500002536923, '2': 6.380900042131543, '4': 8.247799996752292, '8': 10.44230000115931}, 't_prefill_ms_per_tok': 0.023, 'mem_layer_mb': 89.3}
+2026-11-21 15:39:27,182 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.7930999747477472, '2': 2.2782000014558434, '4': 3.0980000155977905, '8': 4.992700007278472}, 't_prefill_ms_per_tok': 0.0093, 'mem_layer_mb': 89.3}
+2026-11-21 15:39:27,790 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.08060001488775, 'gpu-slow': 7.977099972777069, 'gpu-fast': 7.441900030244142}, 'cpu-only': {'gpu-slow': 7.911, 'gpu-fast': 7.372, 'coordinator': 6.422}, 'gpu-slow': {'cpu-only': 6.848, 'gpu-fast': 7.938, 'coordinator': 5.733}, 'gpu-fast': {'cpu-only': 6.703, 'gpu-slow': 7.788, 'coordinator': 8.591}}}
+2026-11-21 15:39:27,792 [coord] INFO planned v1 memory: cpu-only[0:6]=58.8ms -> gpu-slow[6:17]=94.7ms -> gpu-fast[17:28]=38.4ms | bottleneck 94.7ms (0.21 ms to plan)
+2026-11-21 15:39:28,904 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 1.11}
+2026-11-21 15:39:29,194 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 11, 'load_s': 1.4}
+2026-11-21 15:39:29,239 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 11, 'load_s': 1.44}
+2026-11-21 15:39:29,241 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.45, 'plan': 'v1 memory: cpu-only[0:6]=58.8ms -> gpu-slow[6:17]=94.7ms -> gpu-fast[17:28]=38.4ms | bottleneck 94.7ms'}
+2026-11-21 15:45:24,380 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 15:45:24,459 [coord] INFO event node_lost {'node': 'gpu-fast'}
+2026-11-21 15:45:24,460 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+2026-11-21 15:45:24,508 [coord] INFO event node_lost {'node': 'gpu-slow'}
+{
+ "throughput_tok_s": 23.678402860973026,
+ "tpot_ms": {
+  "p50": 951.5795229393759,
+  "p95": 1213.5349523138116,
+  "p99": 1292.8829931177274
+ },
+ "ttft_ms": {
+  "p50": 11284.254312515259,
+  "p95": 66729.42006587978,
+  "p99": 91092.37976789474
+ },
+ "plan": "v1 memory: cpu-only[0:6]=58.8ms -> gpu-slow[6:17]=94.7ms -> gpu-fast[17:28]=38.4ms | bottleneck 94.7ms",
+ "mean_bubble_ratio": 0.40432697112436267
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-153826-serve-hetero3-memory-tcp-r0
+>> serve hetero3 latency r0
+2026-11-21 15:45:39,534 [coord] INFO coordinator up: control 127.0.0.1:64397, data 127.0.0.1:64395 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 15:45:43,017 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 15:45:43,178 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 15:45:43,211 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 15:46:00,605 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 6.6843999666161835, '2': 8.568599994760007, '4': 9.529199975077063, '8': 12.530700012575835}, 't_prefill_ms_per_tok': 0.559, 'mem_layer_mb': 178.5}
+2026-11-21 15:46:16,580 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 2.036700025200844, '2': 2.769900020211935, '4': 3.6976999836042523, '8': 5.730699980631471}, 't_prefill_ms_per_tok': 0.0107, 'mem_layer_mb': 89.3}
+2026-11-21 15:46:32,586 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.747400002088398, '2': 5.072100029792637, '4': 6.882800022140145, '8': 9.902699966914952}, 't_prefill_ms_per_tok': 0.0217, 'mem_layer_mb': 89.3}
+2026-11-21 15:46:33,171 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.074199966154993, 'gpu-fast': 8.036500017624348, 'gpu-slow': 7.425299962051213}, 'cpu-only': {'gpu-fast': 7.217, 'gpu-slow': 8.733, 'coordinator': 8.055}, 'gpu-fast': {'cpu-only': 8.109, 'gpu-slow': 8.392, 'coordinator': 6.751}, 'gpu-slow': {'cpu-only': 7.163, 'gpu-fast': 9.016, 'coordinator': 6.138}}}
+2026-11-21 15:46:33,187 [coord] INFO planned v1 latency: gpu-slow[0:8]=55.1ms -> cpu-only[8:13]=47.6ms -> gpu-fast[13:28]=55.5ms | bottleneck 55.5ms (15.35 ms to plan)
+2026-11-21 15:46:34,040 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 5, 'load_s': 0.85}
+2026-11-21 15:46:34,156 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 8, 'load_s': 0.96}
+2026-11-21 15:46:34,637 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 15, 'load_s': 1.44}
+2026-11-21 15:46:34,639 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.45, 'plan': 'v1 latency: gpu-slow[0:8]=55.1ms -> cpu-only[8:13]=47.6ms -> gpu-fast[13:28]=55.5ms | bottleneck 55.5ms'}
+{
+ "throughput_tok_s": 27.572226472348788,
+ "tpot_ms": {
+  "p50": 829.2657171868607,
+  "p95": 1004.5741956430408,
+  "p99": 1081.153757598714
+ },
+ "ttft_ms": {
+  "p50": 9546.938300132751,
+  "p95": 53618.33162307735,
+  "p99": 76049.07128572464
+ },
+ "plan": "v1 latency: gpu-slow[0:8]=55.1ms -> cpu-only[8:13]=47.6ms -> gpu-fast[13:28]=55.5ms | bottleneck 55.5ms",
+ "mean_bubble_ratio": 0.34489392098535837
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-154529-serve-hetero3-latency-tcp-r0
+2026-11-21 15:51:37,142 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 15:51:37,198 [coord] INFO event node_lost {'node': 'gpu-slow'}
+2026-11-21 15:51:37,289 [coord] INFO event node_lost {'node': 'gpu-fast'}
+2026-11-21 15:51:37,290 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+>> serve hetero3 latency r1
+2026-11-21 15:52:02,910 [coord] INFO coordinator up: control 127.0.0.1:51229, data 127.0.0.1:51227 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 15:52:09,489 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 15:52:09,616 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 15:52:09,620 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 15:52:34,208 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 8.081600011792034, '2': 10.646700044162571, '4': 13.905800005886704, '8': 19.92880000034347}, 't_prefill_ms_per_tok': 0.0453, 'mem_layer_mb': 89.3}
+2026-11-21 15:53:01,046 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 9.183900023344904, '2': 11.549499991815537, '4': 13.477400003466755, '8': 15.96440002322197}, 't_prefill_ms_per_tok': 0.649, 'mem_layer_mb': 178.5}
+2026-11-21 15:53:23,155 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 3.3961000153794885, '2': 4.76779998280108, '4': 6.791400024667382, '8': 10.096299985889345}, 't_prefill_ms_per_tok': 0.0174, 'mem_layer_mb': 89.3}
+2026-11-21 15:53:23,788 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-slow': 7.467499992344528, 'cpu-only': 7.5085999560542405, 'gpu-fast': 7.93550000526011}, 'gpu-slow': {'cpu-only': 7.09, 'gpu-fast': 7.707, 'coordinator': 7.017}, 'cpu-only': {'gpu-slow': 7.634, 'gpu-fast': 7.604, 'coordinator': 7.494}, 'gpu-fast': {'gpu-slow': 6.207, 'cpu-only': 6.944, 'coordinator': 8.159}}}
+2026-11-21 15:53:23,804 [coord] INFO planned v1 latency: cpu-only[0:6]=80.9ms -> gpu-fast[6:21]=101.9ms -> gpu-slow[21:28]=97.3ms | bottleneck 101.9ms (15.82 ms to plan)
+2026-11-21 15:53:25,093 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 7, 'load_s': 1.25}
+2026-11-21 15:53:25,718 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 1.88}
+2026-11-21 15:53:26,781 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 15, 'load_s': 2.97}
+2026-11-21 15:53:26,783 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 2.98, 'plan': 'v1 latency: cpu-only[0:6]=80.9ms -> gpu-fast[6:21]=101.9ms -> gpu-slow[21:28]=97.3ms | bottleneck 101.9ms'}
+2026-11-21 15:57:43,471 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 15:57:43,553 [coord] INFO event node_lost {'node': 'gpu-slow'}
+2026-11-21 15:57:43,554 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+{
+ "throughput_tok_s": 22.101718123257523,
+ "tpot_ms": {
+  "p50": 1007.2515540109957,
+  "p95": 1365.3944648799427,
+  "p99": 1445.8082445369346
+ },
+ "ttft_ms": {
+  "p50": 20064.374446868896,
+  "p95": 90278.51570844649,
+  "p99": 94826.8192410469
+ },
+ "plan": "v1 latency: cpu-only[0:6]=80.9ms -> gpu-fast[6:21]=101.9ms -> gpu-slow[21:28]=97.3ms | bottleneck 101.9ms",
+ "mean_bubble_ratio": 0.34613816654593504
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-155145-serve-hetero3-latency-tcp-r1
+2026-11-21 15:57:43,631 [coord] INFO event node_lost {'node': 'gpu-fast'}
+>> serve hetero3 latency r2
+2026-11-21 15:58:06,478 [coord] INFO coordinator up: control 127.0.0.1:50237, data 127.0.0.1:50235 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 15:58:12,267 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 15:58:12,396 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 15:58:12,417 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 15:58:37,156 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 8.4198999684304, '2': 11.159599991515279, '4': 11.974200024269521, '8': 14.749799971468747}, 't_prefill_ms_per_tok': 0.647, 'mem_layer_mb': 178.5}
+2026-11-21 15:58:58,700 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 3.2147999736480415, '2': 4.223800031468272, '4': 6.0458999942056835, '8': 9.201100037898868}, 't_prefill_ms_per_tok': 0.016, 'mem_layer_mb': 89.3}
+2026-11-21 15:59:20,179 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 7.292599999345839, '2': 9.5193000161089, '4': 13.472800026647747, '8': 19.676199997775257}, 't_prefill_ms_per_tok': 0.0356, 'mem_layer_mb': 89.3}
+2026-11-21 15:59:20,792 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.9993000254035, 'gpu-fast': 7.704799994826317, 'gpu-slow': 7.4572000303305686}, 'cpu-only': {'gpu-fast': 7.487, 'gpu-slow': 8.309, 'coordinator': 7.956}, 'gpu-fast': {'cpu-only': 6.615, 'gpu-slow': 8.236, 'coordinator': 6.807}, 'gpu-slow': {'cpu-only': 7.743, 'gpu-fast': 7.378, 'coordinator': 7.792}}}
+2026-11-21 15:59:20,805 [coord] INFO planned v1 latency: gpu-slow[0:7]=94.3ms -> gpu-fast[7:22]=90.7ms -> cpu-only[22:28]=71.8ms | bottleneck 94.3ms (13.50 ms to plan)
+2026-11-21 15:59:23,147 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 7, 'load_s': 2.32}
+2026-11-21 15:59:23,176 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 2.34}
+2026-11-21 15:59:23,413 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 15, 'load_s': 2.58}
+2026-11-21 15:59:23,418 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 2.61, 'plan': 'v1 latency: gpu-slow[0:7]=94.3ms -> gpu-fast[7:22]=90.7ms -> cpu-only[22:28]=71.8ms | bottleneck 94.3ms'}
+2026-11-21 16:04:38,525 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 16:04:38,525 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+{
+ "throughput_tok_s": 23.724826570984217,
+ "tpot_ms": {
+  "p50": 836.113146724123,
+  "p95": 1312.7200014342673,
+  "p99": 1351.3758642332896
+ },
+ "ttft_ms": {
+  "p50": 20542.84381866455,
+  "p95": 89118.65264177322,
+  "p99": 98621.39228582381
+ },
+ "plan": "v1 latency: gpu-slow[0:7]=94.3ms -> gpu-fast[7:22]=90.7ms -> cpu-only[22:28]=71.8ms | bottleneck 94.3ms",
+ "mean_bubble_ratio": 0.31501132625218325
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-155750-serve-hetero3-latency-tcp-r2
+2026-11-21 16:04:38,653 [coord] INFO event node_lost {'node': 'gpu-fast'}
+>> serve badlink3 latency r0
+2026-11-21 16:05:02,332 [coord] INFO coordinator up: control 127.0.0.1:51652, data 127.0.0.1:51650 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 16:05:08,384 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:05:08,540 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:05:08,703 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:05:31,195 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 3.2615000382065773, '2': 4.3406999902799726, '4': 5.996699968818575, '8': 9.380400006193668}, 't_prefill_ms_per_tok': 0.0162, 'mem_layer_mb': 89.3}
+2026-11-21 16:05:54,530 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 3.2526999711990356, '2': 4.451800021342933, '4': 6.134899973403662, '8': 9.649899962823838}, 't_prefill_ms_per_tok': 0.0164, 'mem_layer_mb': 89.3}
+2026-11-21 16:06:18,009 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 3.245800035074353, '2': 4.41970000974834, '4': 5.986500007566065, '8': 9.30590002099052}, 't_prefill_ms_per_tok': 0.0163, 'mem_layer_mb': 89.3}
+2026-11-21 16:06:20,221 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-b': 8.125599997583777, 'gpu-badlink': 8.557100023608655, 'gpu-a': 7.106500037480146}, 'gpu-b': {'gpu-badlink': 6.432, 'gpu-a': 8.032, 'coordinator': 5.888}, 'gpu-badlink': {'gpu-b': 27.255, 'gpu-a': 27.103, 'coordinator': 28.542}, 'gpu-a': {'gpu-b': 7.29, 'gpu-badlink': 7.682, 'coordinator': 6.996}}}
+2026-11-21 16:06:20,250 [coord] INFO planned v1 latency: gpu-a[0:10]=59.9ms -> gpu-badlink[10:19]=55.2ms -> gpu-b[19:28]=54.0ms | bottleneck 59.9ms (28.25 ms to plan)
+2026-11-21 16:06:21,956 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 9, 'load_s': 1.67}
+2026-11-21 16:06:21,976 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 9, 'load_s': 1.68}
+2026-11-21 16:06:22,566 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 10, 'load_s': 2.31}
+2026-11-21 16:06:22,567 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 2.32, 'plan': 'v1 latency: gpu-a[0:10]=59.9ms -> gpu-badlink[10:19]=55.2ms -> gpu-b[19:28]=54.0ms | bottleneck 59.9ms'}
+2026-11-21 16:09:41,188 [coord] INFO event node_lost {'node': 'gpu-b'}
+2026-11-21 16:09:41,189 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+{
+ "throughput_tok_s": 42.344204655180626,
+ "tpot_ms": {
+  "p50": 523.4031508580672,
+  "p95": 584.5052296304938,
+  "p99": 587.6937523112375
+ },
+ "ttft_ms": {
+  "p50": 464.361310005188,
+  "p95": 24258.276975154877,
+  "p99": 33696.52815580367
+ },
+ "plan": "v1 latency: gpu-a[0:10]=59.9ms -> gpu-badlink[10:19]=55.2ms -> gpu-b[19:28]=54.0ms | bottleneck 59.9ms",
+ "mean_bubble_ratio": 0.2413785265009246
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-160445-serve-badlink3-latency-tcp-r0
+2026-11-21 16:09:41,261 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+2026-11-21 16:09:41,332 [coord] INFO event node_lost {'node': 'gpu-a'}
+>> serve badlink3 latency r1
+2026-11-21 16:10:04,475 [coord] INFO coordinator up: control 127.0.0.1:60519, data 127.0.0.1:60517 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 16:10:10,313 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:10:10,314 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:10:10,321 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:10:31,749 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 3.2410999992862344, '2': 4.2174000409431756, '4': 5.971499951556325, '8': 9.136300010140985}, 't_prefill_ms_per_tok': 0.0164, 'mem_layer_mb': 89.3}
+2026-11-21 16:10:52,944 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 3.303100005723536, '2': 4.349900002125651, '4': 6.224499957170337, '8': 9.549900016281754}, 't_prefill_ms_per_tok': 0.0163, 'mem_layer_mb': 89.3}
+2026-11-21 16:11:11,560 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 2.550199977122247, '2': 3.9656999870203435, '4': 5.501500039827079, '8': 8.625300019048154}, 't_prefill_ms_per_tok': 0.0154, 'mem_layer_mb': 89.3}
+2026-11-21 16:11:13,364 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-a': 7.4973999871872365, 'gpu-b': 8.050900010857731, 'gpu-badlink': 7.73260003188625}, 'gpu-a': {'gpu-b': 6.857, 'gpu-badlink': 6.664, 'coordinator': 7.224}, 'gpu-b': {'gpu-a': 7.538, 'gpu-badlink': 7.242, 'coordinator': 7.264}, 'gpu-badlink': {'gpu-a': 26.349, 'gpu-b': 24.731, 'coordinator': 23.751}}}
+2026-11-21 16:11:13,387 [coord] INFO planned v1 latency: gpu-a[0:9]=53.7ms -> gpu-b[9:18]=56.0ms -> gpu-badlink[18:28]=55.0ms | bottleneck 56.0ms (22.74 ms to plan)
+2026-11-21 16:11:15,693 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 9, 'load_s': 2.29}
+2026-11-21 16:11:15,730 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 9, 'load_s': 2.33}
+2026-11-21 16:11:15,911 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 10, 'load_s': 2.52}
+2026-11-21 16:11:15,913 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 2.52, 'plan': 'v1 latency: gpu-a[0:9]=53.7ms -> gpu-b[9:18]=56.0ms -> gpu-badlink[18:28]=55.0ms | bottleneck 56.0ms'}
+2026-11-21 16:13:24,975 [coord] INFO event node_lost {'node': 'gpu-b'}
+{
+ "throughput_tok_s": 43.956340572704654,
+ "tpot_ms": {
+  "p50": 524.416713164517,
+  "p95": 603.6822080306517,
+  "p99": 609.7933128950548
+ },
+ "ttft_ms": {
+  "p50": 994.560956954956,
+  "p95": 28224.265825748444,
+  "p99": 31254.23523664474
+ },
+ "plan": "v1 latency: gpu-a[0:9]=53.7ms -> gpu-b[9:18]=56.0ms -> gpu-badlink[18:28]=55.0ms | bottleneck 56.0ms",
+ "mean_bubble_ratio": 0.2500193916061388
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-160948-serve-badlink3-latency-tcp-r1
+2026-11-21 16:13:25,040 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+2026-11-21 16:13:25,041 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+2026-11-21 16:13:25,100 [coord] INFO event node_lost {'node': 'gpu-a'}
+>> serve badlink3 latency r2
+2026-11-21 16:13:42,860 [coord] INFO coordinator up: control 127.0.0.1:60647, data 127.0.0.1:60645 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 16:13:49,097 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:13:49,155 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:13:49,160 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:14:08,337 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 2.8894999995827675, '2': 3.91440000385046, '4': 5.376899964176118, '8': 8.364200009964406}, 't_prefill_ms_per_tok': 0.0153, 'mem_layer_mb': 89.3}
+2026-11-21 16:14:26,087 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 2.1826999727636576, '2': 3.241900005377829, '4': 4.487099999096245, '8': 7.48359999852255}, 't_prefill_ms_per_tok': 0.0144, 'mem_layer_mb': 89.3}
+2026-11-21 16:14:43,645 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 2.3237999994307756, '2': 3.1072000274434686, '4': 4.617900005541742, '8': 7.580399978905916}, 't_prefill_ms_per_tok': 0.0149, 'mem_layer_mb': 89.3}
+2026-11-21 16:14:45,565 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-a': 8.297400025185198, 'gpu-badlink': 7.610200031194836, 'gpu-b': 6.608600029721856}, 'gpu-a': {'gpu-badlink': 5.622, 'gpu-b': 8.358, 'coordinator': 7.539}, 'gpu-badlink': {'gpu-a': 26.454, 'gpu-b': 25.082, 'coordinator': 25.636}, 'gpu-b': {'gpu-a': 7.705, 'gpu-badlink': 6.511, 'coordinator': 8.42}}}
+2026-11-21 16:14:45,590 [coord] INFO planned v1 latency: gpu-b[0:10]=46.2ms -> gpu-a[10:18]=43.0ms -> gpu-badlink[18:28]=44.9ms | bottleneck 46.2ms (24.38 ms to plan)
+2026-11-21 16:14:48,206 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 8, 'load_s': 2.6}
+2026-11-21 16:14:48,469 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 10, 'load_s': 2.86}
+2026-11-21 16:14:48,492 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 10, 'load_s': 2.88}
+2026-11-21 16:14:48,513 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 2.9, 'plan': 'v1 latency: gpu-b[0:10]=46.2ms -> gpu-a[10:18]=43.0ms -> gpu-badlink[18:28]=44.9ms | bottleneck 46.2ms'}
+2026-11-21 16:17:50,988 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+2026-11-21 16:17:50,988 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+{
+ "throughput_tok_s": 41.27749439952991,
+ "tpot_ms": {
+  "p50": 499.53387364809646,
+  "p95": 562.8645150547936,
+  "p99": 567.9145894669198
+ },
+ "ttft_ms": {
+  "p50": 845.7533121109009,
+  "p95": 26441.78839921951,
+  "p99": 29231.065220832825
+ },
+ "plan": "v1 latency: gpu-b[0:10]=46.2ms -> gpu-a[10:18]=43.0ms -> gpu-badlink[18:28]=44.9ms | bottleneck 46.2ms",
+ "mean_bubble_ratio": 0.2681415638818909
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-161330-serve-badlink3-latency-tcp-r2
+2026-11-21 16:17:51,039 [coord] INFO event node_lost {'node': 'gpu-a'}
+2026-11-21 16:17:51,110 [coord] INFO event node_lost {'node': 'gpu-b'}
+>> sustained
+2026-11-21 16:18:12,176 [coord] INFO coordinator up: control 127.0.0.1:60886, data 127.0.0.1:60884 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 16:18:17,980 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 16:18:18,126 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 16:18:18,161 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:18:41,057 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 8.986700035165995, '2': 11.611699999775738, '4': 12.881500006187707, '8': 16.911800019443035}, 't_prefill_ms_per_tok': 0.719, 'mem_layer_mb': 178.5}
+2026-11-21 16:19:03,229 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 7.460599998012185, '2': 9.808000002522022, '4': 14.329799974802881, '8': 21.444099955260754}, 't_prefill_ms_per_tok': 0.0375, 'mem_layer_mb': 89.3}
+2026-11-21 16:19:24,288 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 3.265000006649643, '2': 4.343500011600554, '4': 5.903000012040138, '8': 9.36069997260347}, 't_prefill_ms_per_tok': 0.016, 'mem_layer_mb': 89.3}
+2026-11-21 16:19:24,885 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.655800029169768, 'gpu-slow': 7.354400004260242, 'gpu-fast': 7.108299992978573}, 'cpu-only': {'gpu-slow': 7.867, 'gpu-fast': 7.1, 'coordinator': 6.708}, 'gpu-slow': {'cpu-only': 6.837, 'gpu-fast': 7.247, 'coordinator': 8.011}, 'gpu-fast': {'cpu-only': 7.439, 'gpu-slow': 7.631, 'coordinator': 7.067}}}
+2026-11-21 16:19:24,896 [coord] INFO planned v1 latency: gpu-fast[0:16]=94.4ms -> gpu-slow[16:22]=86.0ms -> cpu-only[22:28]=77.3ms | bottleneck 94.4ms (10.32 ms to plan)
+2026-11-21 16:19:26,544 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 1.64}
+2026-11-21 16:19:26,551 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 6, 'load_s': 1.65}
+2026-11-21 16:19:28,102 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 16, 'load_s': 3.2}
+2026-11-21 16:19:28,104 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 3.21, 'plan': 'v1 latency: gpu-fast[0:16]=94.4ms -> gpu-slow[16:22]=86.0ms -> cpu-only[22:28]=77.3ms | bottleneck 94.4ms'}
+2026-11-21 16:20:03,246 [coord] INFO event drift_baseline {'node': 'gpu-fast', 'baseline': 1.32}
+2026-11-21 16:20:03,246 [coord] INFO event drift_baseline {'node': 'gpu-slow', 'baseline': 1.12}
+2026-11-21 16:20:03,246 [coord] INFO event drift_baseline {'node': 'cpu-only', 'baseline': 1.229}
+2026-11-21 16:21:28,152 [coord] INFO event set_slowdown {'node': 'gpu-fast', 'factor': 2.5}
+2026-11-21 16:22:03,349 [coord] INFO event replan_trigger {'reason': 'drift gpu-fast x2.23', 'scale': {'gpu-fast': 2.227}}
+2026-11-21 16:22:03,367 [coord] INFO planned v2 latency: gpu-fast[0:11]=144.6ms -> gpu-slow[11:22]=157.6ms -> cpu-only[22:28]=77.3ms | bottleneck 157.6ms (18.08 ms to plan)
+2026-11-21 16:22:03,368 [coord] INFO event replan_accepted {'version': 2, 'predicted_gain': 0.251, 'staged': True}
+2026-11-21 16:22:03,370 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 2, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 16:22:03,370 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 2, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 16:22:04,368 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 2, 'loaded': 5, 'load_s': 1.0}
+2026-11-21 16:22:04,368 [coord] INFO event switch {'version': 2, 'old': 1, 'stage_s': 1.0, 'plan': 'v2 latency: gpu-fast[0:11]=144.6ms -> gpu-slow[11:22]=157.6ms -> cpu-only[22:28]=77.3ms | bottleneck 157.6ms'}
+2026-11-21 16:24:39,396 [coord] INFO event drained {'version': 1}
+2026-11-21 16:27:26,607 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 16:27:26,608 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+2026-11-21 16:27:26,674 [coord] INFO event node_lost {'node': 'gpu-fast'}
+2026-11-21 16:27:26,717 [coord] INFO event node_lost {'node': 'gpu-slow'}
+drift-on {
+ "throughput_pre": 18.52857142857143,
+ "throughput_post": 12.795744680851064,
+ "transition": {
+  "steady_after_tok_s": 16.173333333333332,
+  "switch_t": 156.21817803382874,
+  "lost_token_s": 290.13333333333327,
+  "degraded_s_equiv": 17.93899422918384
+ },
+ "plan": "v2 latency: gpu-fast[0:11]=144.6ms -> gpu-slow[11:22]=157.6ms -> cpu-only[22:28]=77.3ms | bottleneck 157.6ms"
+}
+2026-11-21 16:27:28,181 [coord] INFO coordinator up: control 127.0.0.1:61187, data 127.0.0.1:61185 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 16:27:31,614 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 16:27:31,766 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 16:27:31,823 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 16:27:50,195 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 6.47760002175346, '2': 8.030600030906498, '4': 8.602700021583587, '8': 10.398200014606118}, 't_prefill_ms_per_tok': 0.5935, 'mem_layer_mb': 178.5}
+2026-11-21 16:28:05,613 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.7523000133223832, '2': 2.1880000131204724, '4': 2.9826000100001693, '8': 4.915199999231845}, 't_prefill_ms_per_tok': 0.0091, 'mem_layer_mb': 89.3}
+2026-11-21 16:28:21,100 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.102399980183691, '2': 5.35739999031648, '4': 6.8577000056393445, '8': 12.056500010658056}, 't_prefill_ms_per_tok': 0.026, 'mem_layer_mb': 89.3}
+2026-11-21 16:28:21,699 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.940799987409264, 'gpu-fast': 7.508099952246994, 'gpu-slow': 6.541500042658299}, 'cpu-only': {'gpu-fast': 6.968, 'gpu-slow': 8.004, 'coordinator': 7.673}, 'gpu-fast': {'cpu-only': 7.259, 'gpu-slow': 7.534, 'coordinator': 8.465}, 'gpu-slow': {'cpu-only': 7.02, 'gpu-fast': 6.514, 'coordinator': 7.007}}}
+2026-11-21 16:28:21,706 [coord] INFO planned v1 latency: gpu-slow[0:7]=48.0ms -> gpu-fast[7:23]=47.7ms -> cpu-only[23:28]=43.0ms | bottleneck 48.0ms (6.39 ms to plan)
+2026-11-21 16:28:22,537 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 5, 'load_s': 0.83}
+2026-11-21 16:28:23,076 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 7, 'load_s': 1.37}
+2026-11-21 16:28:24,256 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 16, 'load_s': 2.55}
+2026-11-21 16:28:24,257 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 2.55, 'plan': 'v1 latency: gpu-slow[0:7]=48.0ms -> gpu-fast[7:23]=47.7ms -> cpu-only[23:28]=43.0ms | bottleneck 48.0ms'}
+2026-11-21 16:30:24,280 [coord] INFO event set_slowdown {'node': 'gpu-fast', 'factor': 2.5}
+2026-11-21 16:36:11,555 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 16:36:11,556 [coord] INFO tcp link closed: ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)
+2026-11-21 16:36:11,619 [coord] INFO event node_lost {'node': 'gpu-slow'}
+2026-11-21 16:36:11,664 [coord] INFO event node_lost {'node': 'gpu-fast'}
+drift-off {
+ "throughput_pre": 21.599999999999998,
+ "throughput_post": 14.502127659574468,
+ "transition": {
+  "steady_after_tok_s": 14.04,
+  "switch_t": null,
+  "lost_token_s": 157.1999999999999,
+  "degraded_s_equiv": 11.19658119658119
+ },
+ "plan": "v1 latency: gpu-slow[0:7]=48.0ms -> gpu-fast[7:23]=47.7ms -> cpu-only[23:28]=43.0ms | bottleneck 48.0ms"
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-161756-rq2-sustained-420s
+>> plot
+# LANShard result tables (generated by bench/plot.py)
+
+### RQ3: per-hop latency (loopback)
+
+| payload | backend | RTT p50 ms | RTT p99 ms | ser ms | deser ms | transfer ms | added vs TCP (one-way) ms |
+|---|---|---|---|---|---|---|---|
+| 8 KB | gloo | 0.423 | 0.719 | 0.075 | 0.026 | 0.110 | +0.154 |
+| 8 KB | grpc | 0.319 | 0.444 | 0.038 | 0.028 | 0.094 | +0.102 |
+| 8 KB | tcp | 0.115 | 0.208 | 0.020 | 0.011 | 0.027 | +0.000 |
+| 16 KB | gloo | 0.454 | 0.752 | 0.082 | 0.026 | 0.119 | +0.167 |
+| 16 KB | grpc | 0.389 | 0.599 | 0.052 | 0.035 | 0.107 | +0.135 |
+| 16 KB | tcp | 0.119 | 0.235 | 0.021 | 0.011 | 0.028 | +0.000 |
+| 64 KB | gloo | 0.744 | 1.394 | 0.138 | 0.043 | 0.190 | +0.299 |
+| 64 KB | grpc | 0.580 | 0.821 | 0.073 | 0.044 | 0.173 | +0.217 |
+| 64 KB | tcp | 0.146 | 0.242 | 0.022 | 0.012 | 0.039 | +0.000 |
+| 1024 KB | gloo | 2.765 | 5.984 | 0.174 | 0.680 | 0.528 | +0.755 |
+| 1024 KB | grpc | 8.335 | 37.886 | 1.139 | 0.952 | 2.077 | +3.539 |
+| 1024 KB | tcp | 1.256 | 8.093 | 0.037 | 0.022 | 0.569 | +0.000 |
+| 4096 KB | gloo | 7.745 | 29.832 | 0.281 | 1.998 | 1.593 | +1.806 |
+| 4096 KB | grpc | 26.381 | 54.447 | 3.745 | 2.946 | 6.499 | +11.124 |
+| 4096 KB | tcp | 4.133 | 17.565 | 0.046 | 0.027 | 1.993 | +0.000 |
+| 16384 KB | gloo | 35.189 | 72.521 | 0.947 | 8.564 | 8.084 | +9.384 |
+| 16384 KB | grpc | 115.026 | 140.273 | 14.341 | 11.337 | 31.835 | +49.302 |
+| 16384 KB | tcp | 16.421 | 28.451 | 0.065 | 0.049 | 8.097 | +0.000 |
+
+### RQ3: per-hop latency (wifi)
+
+| payload | backend | RTT p50 ms | RTT p99 ms | ser ms | deser ms | transfer ms | added vs TCP (one-way) ms |
+|---|---|---|---|---|---|---|---|
+| 8 KB | gloo | 7.595 | 37.469 | 0.000 | 0.036 | 3.762 | -0.140 |
+| 8 KB | grpc | 7.495 | 43.411 | 0.000 | 0.048 | 3.699 | -0.190 |
+| 8 KB | tcp | 7.875 | 37.454 | 0.000 | 0.021 | 3.917 | +0.000 |
+| 16 KB | gloo | 8.463 | 17.190 | 0.000 | 0.044 | 4.187 | +0.169 |
+| 16 KB | grpc | 8.838 | 40.084 | 0.000 | 0.077 | 4.342 | +0.356 |
+| 16 KB | tcp | 8.125 | 39.259 | 0.000 | 0.023 | 4.039 | +0.000 |
+| 64 KB | gloo | 10.592 | 40.566 | 0.000 | 0.069 | 5.227 | +0.343 |
+| 64 KB | grpc | 11.130 | 41.927 | 0.000 | 0.107 | 5.458 | +0.612 |
+| 64 KB | tcp | 9.906 | 42.421 | 0.000 | 0.037 | 4.916 | +0.000 |
+| 1024 KB | gloo | 53.841 | 55.632 | 0.000 | 0.739 | 26.181 | -0.049 |
+| 1024 KB | grpc | 61.252 | 79.296 | 0.000 | 0.998 | 29.628 | +3.656 |
+| 1024 KB | tcp | 53.939 | 97.217 | 0.000 | 0.081 | 26.888 | +0.000 |
+| 4096 KB | gloo | 188.102 | 211.991 | 0.000 | 2.288 | 91.763 | +1.378 |
+| 4096 KB | grpc | 207.606 | 222.652 | 0.000 | 2.909 | 100.894 | +11.130 |
+| 4096 KB | tcp | 185.346 | 196.848 | 0.000 | 0.071 | 92.602 | +0.000 |
+| 16384 KB | gloo | 717.991 | 732.281 | 0.000 | 8.052 | 350.944 | +7.862 |
+| 16384 KB | grpc | 793.850 | 824.742 | 0.000 | 11.146 | 385.779 | +45.792 |
+| 16384 KB | tcp | 702.267 | 705.746 | 0.000 | 0.059 | 351.074 | +0.000 |
+
+### RQ1: partitioning policy (median [IQR] over repeats)
+
+| preset | policy | runs | throughput tok/s | TPOT p50 ms | TPOT p99 ms | TTFT p50 ms | bubble | plan |
+|---|---|---|---|---|---|---|---|---|
+| badlink3 | memory | 3 | 68.8 [66.9-70.7] | 282 | 343 [321-350] | 565 | 0.24 | gpu-b[0:10]=32.5ms -> gpu-a[10:19]=29.9ms -> gpu-badlink[19:28]=40.3ms | bottleneck 40.3ms |
+| hetero3 | memory | 3 | 24.5 [24.1-25.8] | 806 | 1084 [1083-1189] | 11870 | 0.45 | cpu-only[0:6]=58.8ms -> gpu-slow[6:17]=94.7ms -> gpu-fast[17:28]=38.4ms | bottleneck 94.7ms |
+| badlink3 | latency-additive | 3 | 68.2 [64.7-68.7] | 297 | 358 [356-365] | 665 | 0.28 | gpu-a[0:9]=33.9ms -> gpu-badlink[9:17]=35.5ms -> gpu-b[17:28]=35.8ms | bottleneck 35.8ms |
+| hetero3 | latency-additive | 2 | 30.1 [29.9-30.3] | 728 | 1023 [1005-1041] | 10686 | 0.38 | gpu-slow[0:7]=57.9ms -> gpu-fast[7:22]=64.4ms -> cpu-only[22:28]=53.0ms | bottleneck 64.4ms |
+| badlink3 | latency | 3 | 42.3 [41.8-43.2] | 523 | 588 [578-599] | 846 | 0.25 | gpu-b[0:10]=46.2ms -> gpu-a[10:18]=43.0ms -> gpu-badlink[18:28]=44.9ms | bottleneck 46.2ms |
+| hetero3 | latency | 3 | 23.7 [22.9-25.6] | 836 | 1351 [1216-1399] | 20064 | 0.34 | gpu-slow[0:7]=94.3ms -> gpu-fast[7:22]=90.7ms -> cpu-only[22:28]=71.8ms | bottleneck 94.3ms |
+
+### RQ2: sustained run with a throttled node
+
+| drift handling | throughput before | after throttle (steady) | repartitions | transition cost (s of throughput) | TPOT p99 ms |
+|---|---|---|---|---|---|
+| drift-off | 21.6 | 14.5 | 0 | 11.2 | 833 |
+| drift-on | 18.5 | 12.8 | 1 | 17.9 | 2017 |
+
+### Quality vs B1 (single-machine HF)
+
+Plan: `v1 latency: gpu-slow[0:7]=50.2ms -> cpu-only[7:12]=45.7ms -> gpu-fast[12:28]=50.5ms | bottleneck 50.5ms`
+
+| task | n | greedy exact match | B1 accuracy | LANShard accuracy | answer agreement |
+|---|---|---|---|---|---|
+| exact | 50 | 0.920 | - | - | - |
+| mmlu | 300 | 0.987 | 0.623 | 0.620 | 0.997 |
+| gsm8k | 60 | 0.850 | 0.500 | 0.500 | 0.917 |
+
+### B1 single-machine reference
+
+Throughput 27.7 tok/s (one request at a time), TPOT p50 36 ms / p99 41 ms, peak VRAM 3.02 GB.
+
+### Device table (from the discovery probe, latest run)
+
+| node | OS | accelerator | device | free mem GB (advertised) | emulated slowdown | t_layer b=1 ms | t_layer b=4 ms | prefill ms/tok | layer MB |
+|---|---|---|---|---|---|---|---|---|---|
+| gpu-a | Windows 10 | NVIDIA GeForce RTX 4060 Laptop GPU | float16 | 2.0 | 1.0 | 2.89 | 5.38 | 0.0153 | 89 |
+| gpu-badlink | Windows 10 | NVIDIA GeForce RTX 4060 Laptop GPU | float16 | 2.0 | 1.0 | 2.18 | 4.49 | 0.0144 | 89 |
+| gpu-b | Windows 10 | NVIDIA GeForce RTX 4060 Laptop GPU | float16 | 2.0 | 1.0 | 2.32 | 4.62 | 0.0149 | 89 |
+figures in D:\Faisal\Creations\Claude\lanshard\results\figures
+RERUN DONE
