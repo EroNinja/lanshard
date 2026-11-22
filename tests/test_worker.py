@@ -49,3 +49,19 @@ def test_release_during_prepare_keeps_the_new_plans_layers():
     assert sorted(w.runner.layers) == [0, 1, 2, 3, 4, 5]
     assert sorted(w.plans) == [2, 3]
     assert [m["type"] for m in w.ctrl.sent] == ["ready"] * 3
+
+
+def test_failed_staging_is_reported():
+    def broken_load(ids, device, dtype):
+        raise OSError("shard missing")
+
+    w = _worker(broken_load)
+    w._guarded(w._do_prepare, {"type": "prepare", "plan": _plan(1, 4), "addrs": {}})
+    assert [m["type"] for m in w.ctrl.sent] == ["prepare_failed"]
+    assert 1 not in w.plans
+
+
+def test_failed_control_request_is_reported():
+    w = _worker(None)
+    w._guarded(w._do_profile, {"type": "profile", "model": "/nonexistent/model"})
+    assert [(m["type"], m["for"]) for m in w.ctrl.sent] == [("error", "profile")]

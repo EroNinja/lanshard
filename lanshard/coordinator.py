@@ -137,6 +137,7 @@ class Node:
     under_since: Optional[float] = None
     ready_versions: set = field(default_factory=set)
     failed_versions: set = field(default_factory=set)
+    error: Optional[str] = None  # last failure the worker reported for a control request
     last_seen: float = field(default_factory=time.time)
 
 
@@ -310,6 +311,7 @@ class Coordinator:
                                                 "kv_reqs": msg["kv_reqs"], **{f"mem_{k}": v for k, v in msg["mem"].items()}})
                 elif t == "error":
                     log.error("worker %s error on %s: %s", node.node_id, msg.get("for"), msg.get("error"))
+                    node.error = f"{msg.get('for')}: {msg.get('error')}"
                 self.cv.notify_all()
         if node is not None:
             with self.cv:
@@ -346,9 +348,11 @@ class Coordinator:
         nodes = self.alive_nodes()
         # profile one node at a time so co-located workers do not disturb each other's timings
         for n in nodes:
-            n.profile = None
+            n.profile = n.error = None
             n.conn.send({"type": "profile", "model": self.model, "budget_s": self.profile_budget_s})
-            self._wait(lambda: n.profile is not None or not n.alive, timeout, f"profile of {n.node_id}")
+            self._wait(lambda: n.profile is not None or not n.alive or n.error, timeout, f"profile of {n.node_id}")
+            if n.error:
+                raise RuntimeError(f"worker {n.node_id} failed: {n.error}")
             if n.profile:
                 p = n.profile
                 self.event("profiled", node=n.node_id, t_decode_ms=p["t_decode_ms"],

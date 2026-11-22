@@ -172,11 +172,11 @@ class Worker:
     def _handle(self, msg: Dict):
         t = msg["type"]
         if t == "profile":
-            threading.Thread(target=self._do_profile, args=(msg,), daemon=True).start()
+            threading.Thread(target=self._guarded, args=(self._do_profile, msg), daemon=True).start()
         elif t == "ping_peers":
-            threading.Thread(target=self._do_ping, args=(msg,), daemon=True).start()
+            threading.Thread(target=self._guarded, args=(self._do_ping, msg), daemon=True).start()
         elif t == "prepare":
-            threading.Thread(target=self._do_prepare, args=(msg,), daemon=True).start()
+            threading.Thread(target=self._guarded, args=(self._do_prepare, msg), daemon=True).start()
         elif t == "release":
             self._release(int(msg["version"]))
         elif t == "free":
@@ -198,6 +198,15 @@ class Worker:
         elif t == "shutdown":
             self.stop.set()
             os._exit(0)
+
+    def _guarded(self, fn, msg):
+        """Run a control request on its own thread and report a failure to the coordinator,
+        which otherwise waits for the reply until its timeout."""
+        try:
+            fn(msg)
+        except Exception as e:
+            log.exception("%s failed", msg["type"])
+            self.ctrl.send({"type": "error", "node_id": self.node_id, "error": repr(e), "for": msg["type"]})
 
     def _do_profile(self, msg):
         model = msg["model"]
@@ -257,11 +266,14 @@ class Worker:
                      f"{need[0]}-{need[-1]}" if need else "none", len(missing), load_s)
             self.ctrl.send({"type": "ready", "node_id": self.node_id, "version": plan.version,
                             "loaded": len(missing), "load_s": load_s, "mem": self._mem()})
-        except torch.OutOfMemoryError as e:
+        except Exception as e:  # out of memory or a loader failure: this node cannot stage the plan
+            oom = isinstance(e, torch.OutOfMemoryError)
+            if not oom:
+                log.exception("staging plan v%d failed", plan.version)
             if self.device.startswith("cuda"):
                 torch.cuda.empty_cache()
             self.ctrl.send({"type": "prepare_failed", "node_id": self.node_id, "version": plan.version,
-                            "error": "oom"})
+                            "error": "oom" if oom else repr(e)})
 
     def _capacity_layers(self, kv_tokens: int) -> Optional[int]:
         if self.mem_limit_gb is None or not self.profile:
