@@ -57,12 +57,14 @@
 | badlink3 | latency | 3 | 42.3 [41.8-43.2] | 523 | 588 [578-599] | 846 | 0.25 | gpu-b[0:10]=46.2ms -> gpu-a[10:18]=43.0ms -> gpu-badlink[18:28]=44.9ms | bottleneck 46.2ms |
 | hetero3 | latency | 3 | 23.7 [22.9-25.6] | 836 | 1351 [1216-1399] | 20064 | 0.34 | gpu-slow[0:7]=94.3ms -> gpu-fast[7:22]=90.7ms -> cpu-only[22:28]=71.8ms | bottleneck 94.3ms |
 
-### RQ2: sustained run with a throttled node
+### RQ2: sustained run, gpu-fast throttled 2.5x at t=120 s
 
-| drift handling | throughput before | after throttle (steady) | repartitions | transition cost (s of throughput) | TPOT p99 ms |
-|---|---|---|---|---|---|
-| drift-off | 21.6 | 14.5 | 0 | 11.2 | 833 |
-| drift-on | 18.5 | 12.8 | 1 | 17.9 | 2017 |
+| variant | tok/s before | tok/s steady after | retained | tokens in 300 s after throttle | switch pause | TPOT p99 ms |
+|---|---|---|---|---|---|---|
+| drift off (B2-style static plan) | 21.6 | 14.5 | 67% | 4308 | - | 833 |
+| drift on, pure drain-then-switch | 18.5 | 12.8 | 69% | 3781 | 1.0s | 2017 |
+| drift on + migration, staged-only (declined) | 20.3 | 15.0 | 74% | 4422 | 0.2s | 819 |
+| drift on + migration + cost-aware choice (final) | 21.8 | 15.9 | 73% | 4426 | 0.7s | 971 |
 
 ### Quality vs B1 (single-machine HF)
 

@@ -88,17 +88,17 @@ def fig_rq2(lines):
     latest = {}
     for p, s in runs:
         latest[s["tag"]] = s  # newest wins (sorted by stamp)
-    colors = {"drift-off": "#d9822b", "drift-on-drain": "#9bb7e8", "drift-on": "#2a6fdb"}
+    colors = {"drift-off": "#d9822b", "drift-on-drain": "#9bb7e8", "drift-on-staged-only": "#7a9a5a",
+              "drift-on": "#2a6fdb"}
     labels = {"drift-off": "drift off (B2-style static plan)", "drift-on-drain": "drift on, pure drain-then-switch",
-              "drift-on": "drift on + straggler migration"}
+              "drift-on-staged-only": "drift on + migration, staged-only (declined)",
+              "drift-on": "drift on + migration + cost-aware choice (final)"}
     fig, ax = plt.subplots(figsize=(10, 3.8))
-    lines.append("
-### RQ2: sustained run, gpu-fast throttled 2.5x at t=120 s
-")
+    lines.append("\n### RQ2: sustained run, gpu-fast throttled 2.5x at t=120 s\n")
     lines.append("| variant | tok/s before | tok/s steady after | retained | tokens in 300 s after throttle | switch pause | TPOT p99 ms |")
     lines.append("|---|---|---|---|---|---|---|")
     thr = None
-    for tag in ("drift-off", "drift-on-drain", "drift-on"):
+    for tag in ("drift-off", "drift-on-drain", "drift-on-staged-only", "drift-on"):
         s = latest.get(tag)
         if not s:
             continue

@@ -2,6 +2,26 @@
 
 CSE 598 Final Report, Fall 2026. Team 20: Omer Kuyucu (lead), Ashwanth Balakrishnan, Faisal Barkat Khorasi.
 
+> **Summary.** We built LANShard: a coordinator plus workers that serve one LLM pipelined across
+> heterogeneous machines. It has per-layer profiling, an exact DP partitioner, drift-triggered
+> repartitioning, continuous batching, and three swappable transports. All experiments ran on one laptop
+> with emulated heterogeneity (CPU worker, slowed GPU worker, memory caps, Wi-Fi delay emulation).
+>
+> * **RQ1:** partitioning by measured layer time beats memory-proportional partitioning by **+12-21%
+>   throughput** on heterogeneous devices, with a lower bubble ratio and equal or better p99 TPOT. The
+>   proposal's "compute + RTT" stage cost was wrong for throughput: it starved a bad-link node for no gain.
+>   Hop latency overlaps with pipelining, and the fixed model treats it as a tie-breaker.
+> * **RQ2:** pure drain-then-switch, as proposed, *lost* 12% of tokens after a throttle, because the old
+>   split lives as long as the longest request. With staging-aware replanning, straggler migration and a
+>   cost-aware switch decision, the cluster keeps **+10% steady-state throughput** over a static plan
+>   (+3% over the first 5 minutes, which include the migration cost), with zero admission pause.
+> * **RQ3:** raw TCP is the best stage channel. gRPC adds ~0.1 ms per 8 KB decode hop and ~49 ms per 16 MB
+>   prefill hop. Gloo sits in between. Under Wi-Fi-like jitter, variance (~40 ms p99) dwarfs all of this.
+> * **Quality:** MMLU and GSM8K accuracy match single-machine Transformers (62.0 vs 62.3%, 50 vs 50%).
+>   Single-request output is bit-identical, including across mid-generation repartitions.
+> * **Caveats:** one machine, thermal drift over the session, few repeats, model size 1.5B. Section 6 lists
+>   what must be re-run on real laptops before these numbers are final.
+
 ## 1. Problem
 
 A model that fits on no single laptop can be served by pipelining its layers across several laptops on one
@@ -215,7 +235,47 @@ three hours of back-to-back runs. The *plans* are still the same shape (fast GPU
 
 ### 4.3 RQ2: drift-triggered repartitioning
 
-<!--RQ2-->
+![RQ2](results/figures/rq2_sustained.png)
+
+Closed-loop load on `hetero3` (12 concurrent clients, latency policy). At t = 120 s gpu-fast, which holds
+15-16 of the 28 layers, is throttled to 2.5× slower for the rest of the run. Each variant is one 420 s run.
+The variants differ only in how I3 reacts:
+
+| variant | tok/s before | steady tok/s after | retained | tokens in the 300 s after the throttle | switch (load time) | TPOT p99 |
+|---|---|---|---|---|---|---|
+| drift off (static plan, as B2) | 21.6 | 14.5 | 67% | 4308 | - | 833 ms |
+| drift on, pure drain-then-switch | 18.5 | 12.8 | 69% | 3781 (**−12%**) | 1.0 s | 2017 ms |
+| drift on + migration, staged plans only | 20.3 | 15.0 | 74% | 4422 (+3%) | 0.2 s | 819 ms |
+| **drift on + migration + cost-aware choice (final)** | 21.8 | **15.9** | 73% | **4426 (+3%)** | 0.7 s | 971 ms |
+
+(Run-to-run noise in the "before" column is ±2 tok/s; compare *retained* and the post-throttle columns.)
+
+* **Detection works.** Every drift-on run flagged gpu-fast 30-35 s after the throttle (the 30 s sustain
+  window) with an estimated slowdown of 2.2-3.3×. The true value is 2.5×, plus contention from the shared GPU.
+* **The switch itself is no longer the cost.** With the staging-aware DP the new layers load next to the old
+  ones in 0.2-1.0 s, with **no admission pause**. Our first attempt (section 5) paused for ~100 s per switch.
+* **Pure drain-then-switch, as proposed, made things worse** (−12% tokens). For the ~155 s it took the old
+  plan's 300-token requests to finish, the throttled node served both plans. This is the real cost of C2:
+  never migrating anything means living with the old split for as long as the longest request.
+* **Migrating stragglers fixes that.** Moving long requests to the new plan by re-prefilling them takes
+  ~15 s (the dip after the dotted line in the plot), after which the new plan runs alone. The final variant
+  keeps **15.9 tok/s against 14.5 for the static plan (+10%) in steady state**. Over the 5 minutes after the
+  throttle it nets +3% because it pays the migration dip first. On the proposal's 30-minute run the
+  steady-state gain dominates, so we expect ≈ +9%.
+* **The cost-aware choice behaves sensibly.** In the "staged plans only" run, a contention-induced drift on
+  gpu-slow at t = 90 s had already used the cluster's spare memory. When the real throttle came, the best
+  stageable plan gained only 6%, so the system declined it. The final version also prices an unconstrained
+  plan that needs a short pause (estimated 10 s) over a 5-minute horizon. Here the staged plan was the best
+  option (+36% predicted bottleneck improvement), so no pause was taken.
+* **Why the gain is ~10% and not more:** memory. With 33 layers of capacity for a 28-layer model, the other
+  nodes can absorb only ~5 layers from the throttled one. The best achievable bottleneck after the throttle
+  is ~119 ms, against 45-50 ms before it. Repartitioning cannot beat physics; it can only stop the slow node
+  from setting the pace with an oversized stage.
+* **RQ2's second question, the KV cost of repartitioning:** we never migrate KV. We stage weights (~90 MB
+  per moved layer, 0.1 s each from local disk). For requests that would otherwise outlive the old plan, we
+  recompute their KV via re-prefill (~15 s for 7 requests of ~400-1300 tokens on this cluster). Requests
+  with < 32 tokens left finish in place. Re-prefilled requests produce token-identical output
+  (`tests/test_cluster.py`).
 
 ### 4.4 Output quality vs a single machine
 
@@ -268,6 +328,11 @@ every affected experiment was re-run. The pre-fix runs are kept: `latency-additi
      plan by re-prefilling their prompt plus generated text. This is C2's "recompute" option, applied only to
      stragglers. The old plan drains in seconds. A test confirms migrated requests produce **token-identical**
      output to an un-repartitioned run (`tests/test_cluster.py`).
+   * Restricting replans to stageable plans sometimes left nothing worth doing (a 6% gain, declined). **Fix:**
+     the coordinator now prices three options over a 5-minute horizon: keep, staged (zero pause), and
+     unconstrained (it earns nothing during an estimated pause, and the estimate is replaced by the measured
+     pause after the first one). It picks the best. In the paused path, long requests are re-queued with
+     their text so far instead of being waited for. This is also tested for token-identical output.
 4. **False drift triggers.** Two "GPUs" sharing one physical GPU produce contention that looks like drift,
    which caused replans before any throttle. **Fix:** drift is ignored for 20 s after a switch, and a replan
    happens only if the planner predicts a ≥ 10% lower bottleneck *under the measured slowdown*
@@ -294,7 +359,8 @@ The bug has not recurred in the 10 runs since. If it does, the logs will now sho
   doubled, so absolute throughput is only comparable between runs taken close together. We report start
   times for that reason.
 * **Repeats.** 3 repeats per RQ1 configuration (the proposal planned 5) and one 7-minute RQ2 run per variant
-  (the proposal planned 30 minutes). The quality evaluation used 300 MMLU / 60 GSM8K questions instead of
+  (the proposal planned 30 minutes). Single RQ2 runs vary by ±2 tok/s, so the +10% steady-state result needs
+  repeats before it is quoted with confidence. The quality evaluation used 300 MMLU / 60 GSM8K questions instead of
   1000 / 500. All scripts take the full sizes as flags (`bench/run_all.py` without `--quick`).
 * **Model size.** 1.5B in FP16, so that one laptop could host everything. All research questions are about
   partitioning policy, and the code is model-agnostic (any HF decoder with standard layer names), but
