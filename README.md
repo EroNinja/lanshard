@@ -49,8 +49,8 @@ heterogeneity. See [Limitations](#limitations-and-open-todos) before quoting the
 
 | Question | Finding |
 |---|---|
-| **RQ1**: split by measured time vs free memory | **+12-21% throughput** on heterogeneous devices, lower pipeline bubble, equal or better p99 TPOT. The proposal's "compute + RTT" stage cost was wrong for throughput, so hop latency is now a tie-breaker. |
-| **RQ2**: re-split when a laptop throttles | Pure drain-then-switch (as proposed) **lost 12%** of tokens. With staging-aware plans, straggler migration and a cost-aware switch decision: **+10% steady-state throughput** vs a static split, **zero pause** (switch in < 1 s). |
+| **RQ1**: split by measured time vs free memory | **+9% and +16% throughput** on heterogeneous devices in the two same-workload back-to-back pairs (an earlier "+12-21%" paired runs with different workloads, see REPORT 4.2), lower pipeline bubble, equal or better p99 TPOT. The proposal's "compute + RTT" stage cost was wrong for throughput, so hop latency is now a tie-breaker. |
+| **RQ2**: re-split when a laptop throttles | Pure drain-then-switch (as proposed) **lost 12%** of tokens. With staging-aware plans, straggler migration and a cost-aware switch decision: **+10% steady-state throughput** vs a static split in one run per variant (the static baseline itself varies by about 10% between runs, so this needs repeats), **zero pause** (switch in < 1 s). |
 | **RQ3**: per-hop transport cost | **Raw TCP is best.** gRPC adds +0.1 ms per 8 KB decode hop and +49 ms per 16 MB prefill hop; Gloo is in between. Wi-Fi jitter (~40 ms p99) dwarfs all of these. |
 | **Quality** vs one GPU | MMLU 62.0% vs 62.3%, GSM8K 50% vs 50%, 99.7% same answers. A single request is bit-identical, even across a mid-generation re-split. |
 
@@ -160,6 +160,8 @@ curl http://<coordinator-ip>:8000/v1/chat/completions -d "{\"messages\":[{\"role
 * `--netem wifi|profile.json|base=..,jitter=..`: emulate a Wi-Fi link.
 * Worker only: `--device cuda|mps|cpu`, and `--slowdown 2` / `--mem-limit-gb 3` to emulate a slower or
   smaller device.
+* `--wire-dtype float32` (worker): send hidden states to the next stage without rounding to FP16. Use it
+  when stages compute in FP32 and outputs must not depend on where the cuts are.
 
 **On one machine (emulated cluster).** A worker is a process, not a machine:
 
@@ -190,14 +192,17 @@ python -m pytest tests -q
 
 The tests cover:
 
-* the DP against brute force (both cost models) over every order and split;
-* memory and staging constraints;
-* round-trip and FIFO order on all three transports;
-* netem ordering.
+* the DP against brute force (both cost models, bottleneck and latency) over every order and split;
+* memory and staging constraints, and link occupancy;
+* round-trip, FIFO order, reconnect and failure reporting on the transports, netem ordering and rate;
+* **end to end on a tiny random-weight model generated at test time (no download):** a real cluster
+  of worker processes matches stock `transformers` token for token, stays identical across staged and
+  paused mid-generation re-splits, survives a killed or suspended worker, and fails requests cleanly
+  when the surviving nodes cannot hold the model.
 
-With the 0.5B weights cached, they also check exact greedy agreement with HF and token-identical output
-across staged and paused mid-generation re-splits (about 2 min; `LANSHARD_SKIP_SLOW=1` skips these).
-GitHub Actions runs the suite on every push and PR (CPU-only; the model tests skip there).
+With the 0.5B weights cached, the same checks run on the real model (about 3 min on CPU;
+`LANSHARD_SKIP_SLOW=1` skips the cluster part). GitHub Actions runs everything except the 0.5B tests
+on every push and PR, against transformers 4 and 5.
 
 ## Contributing and code review
 
@@ -219,6 +224,8 @@ gh pr create
 
 * **Reviewing the existing code:** the initial codebase is open as one big **review PR** (the "Review:
   initial codebase" PR). Please comment on specific lines there, then approve or request changes.
+  A full written review (findings by severity, measurement validity, comparison with prior work) is
+  in [`docs/REVIEW.md`](docs/REVIEW.md).
 * **Bugs or questions:** open a GitHub Issue.
 * **Results:** commit new runs under `results/` (keep the auto-generated folder names) and re-run
   `bench/plot.py`.
@@ -236,7 +243,13 @@ gh pr create
 * **B3 not run.** **TODO:** llama.cpp RPC baseline.
 * **Intermittent stall.** An intermittent stall appeared in 2 early runs. The root cause is not found; it is
   mitigated by micro-batch retransmit, with diagnostics that dump stacks if it recurs (REPORT.md section 5).
-* **RTT is measured once at join.** Link drift is not re-measured.
+  `docs/REVIEW.md` (M6) narrows it to micro-batches lost between workers.
+* **RTT and bandwidth are measured once at join.** Link drift is not re-measured.
+* **Emulated links changed after the runs.** The committed results used a netem model in which bandwidth
+  only delayed each message. It now limits how much a link carries (REPORT.md section 5.1), so the serving
+  runs with emulated links (RQ1 and RQ2, `badlink3` most of all) should be repeated. RQ3 is not affected.
+* **No authentication.** Control, data and HTTP ports accept any host on the network. Do not run on a
+  shared network without a firewall.
 
 ## AI assistance
 

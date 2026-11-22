@@ -42,7 +42,8 @@ def spawn_worker(coord_addr: str, spec: Dict, transport: str, log_dir: Optional[
     args = [sys.executable, "-m", "lanshard.worker", "--coordinator", coord_addr, "--transport", transport,
             "--host", "127.0.0.1", "--profile-budget", str(spec.get("profile_budget", profile_budget))]
     for key, flag in (("node_id", "--node-id"), ("device", "--device"), ("dtype", "--dtype"),
-                      ("slowdown", "--slowdown"), ("mem_limit_gb", "--mem-limit-gb"), ("netem", "--netem")):
+                      ("slowdown", "--slowdown"), ("mem_limit_gb", "--mem-limit-gb"), ("netem", "--netem"),
+                      ("wire_dtype", "--wire-dtype")):
         if spec.get(key) not in (None, ""):
             args += [flag, str(spec[key])]
     env = dict(os.environ, PYTHONPATH=ROOT + os.pathsep + os.environ.get("PYTHONPATH", ""),
@@ -63,6 +64,7 @@ def local_cluster(model: str, workers: List[Dict], transport: str = "tcp", polic
                         sched=sched, drift=drift, netem=coord_netem, profile_budget_s=profile_budget,
                         **coord_kw).start()
     procs = [spawn_worker(coord.control_address, w, transport, log_dir, profile_budget) for w in workers]
+    coord.worker_procs = {w.get("node_id"): p for w, p in zip(workers, procs)}  # for fault injection
     try:
         if bootstrap:
             coord.bootstrap(len(workers), timeout=900)

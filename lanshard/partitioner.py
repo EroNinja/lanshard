@@ -3,13 +3,17 @@
 Pipeline shape: coordinator -> stage 1 -> ... -> stage k -> coordinator.
 Stage cost for node n holding ``m`` layers with successor ``s``::
 
-    cost = m * t_layer(n) + hop(n -> s)
+    cost = max(m * t_layer(n), occupancy(n -> s))        "latency" (default)
+    cost = m * t_layer(n) + rtt(n -> s) / 2              "latency-additive" (the proposal's model)
 
 where ``t_layer`` is the profiled per-layer time for the planning micro-batch
-and ``hop`` is the measured one-way latency (RTT / 2) plus payload/bandwidth.
+and ``occupancy`` is payload / measured bandwidth of that link. With several
+micro-batches in flight a hop's latency overlaps other stages' compute, so it
+does not limit throughput; it counts toward single-stream latency instead.
 Decode throughput of a full pipeline is set by its slowest stage, so we
-minimise the maximum stage cost (ties broken by total latency), subject to each
-node's memory: ``m * mem_layer + m * kv_bytes_per_layer + overhead <= mem_free``.
+minimise the maximum stage cost, then the total latency among the plans that
+reach it, subject to each node's memory:
+``m * mem_layer + m * kv_bytes_per_layer + overhead <= mem_free``.
 
 For a fixed node order the exact DP is O(L^2 N). With N <= 5 we also search
 every ordered subset of nodes (<= 325 orders), so a node on a bad link is moved
@@ -92,20 +96,34 @@ class InfeasibleError(RuntimeError):
     pass
 
 
+def xfer_ms(bandwidth_mbps, a: str, b: str, payload_bytes: int) -> float:
+    """Link occupancy: how long the link a -> b is busy sending one planning payload.
+
+    ``bandwidth_mbps`` is one number for every link or a measured ``{a: {b: mbps}}`` matrix;
+    a link that is missing from the matrix counts as unlimited.
+    """
+    mbps = bandwidth_mbps.get(a, {}).get(b) if isinstance(bandwidth_mbps, dict) else bandwidth_mbps
+    return payload_bytes * 8 / (mbps * 1e6) * 1e3 if mbps else 0.0
+
+
 def hop_ms(rtt: Dict[str, Dict[str, float]], a: str, b: str, payload_bytes: int = 0,
-           bandwidth_mbps: float = 0.0) -> float:
+           bandwidth_mbps=0.0) -> float:
     r = rtt.get(a, {}).get(b)
     if r is None:
         r = rtt.get(b, {}).get(a, 0.0)
-    t = r / 2.0
-    if bandwidth_mbps:
-        t += payload_bytes * 8 / (bandwidth_mbps * 1e6) * 1e3
-    return t
+    return r / 2.0 + xfer_ms(bandwidth_mbps, a, b, payload_bytes)
 
 
 def _dp_fixed_order(order: Sequence[NodeSpec], L: int, rtts: Sequence[float], xfers: Sequence[float],
-                    hop_mode: str = "overlap", current: Optional[Dict[str, tuple]] = None):
+                    hop_mode: str = "overlap", current: Optional[Dict[str, tuple]] = None,
+                    limit: Optional[float] = None):
     """Exact min-max contiguous split for a fixed node order.
+
+    With ``limit`` it instead returns the split with the lowest total latency among those whose
+    every stage costs at most ``limit``. Running it once without and once with the optimal
+    bottleneck as the limit gives the exact lexicographic optimum (bottleneck, then latency);
+    breaking ties inside the min-max pass alone does not, because the best prefix by bottleneck
+    is not always the best prefix by latency.
 
     rtts[i]/xfers[i]: one-way latency and link-occupancy time of node i's outbound hop.
     hop_mode "overlap": with enough micro-batches in flight a hop's latency overlaps other
@@ -144,6 +162,12 @@ def _dp_fixed_order(order: Sequence[NodeSpec], L: int, rtts: Sequence[float], xf
             elif current is not None:
                 pass  # a node joining the pipeline holds nothing yet
             cost = np.where(bad, INF, cost)
+            if limit is not None:
+                tl = np.where(cost <= limit + 1e-9, lat[j - 1][:e] + latc_all, INF)
+                pick = int(np.argmin(tl))
+                if np.isfinite(tl[pick]):
+                    f[j][e], lat[j][e], arg[j][e] = max(f[j - 1][pick], cost[pick]), tl[pick], pick
+                continue
             prev = f[j - 1][:e]
             cand = np.maximum(prev, cost)
             best = cand.min()
@@ -166,7 +190,7 @@ def _dp_fixed_order(order: Sequence[NodeSpec], L: int, rtts: Sequence[float], xf
 
 def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, Dict[str, float]],
                      version: int = 1, search_order: bool = True, payload_bytes: int = 0,
-                     bandwidth_mbps: float = 0.0, coord_ms: float = 0.0, hop_mode: str = "overlap",
+                     bandwidth_mbps=0.0, coord_ms: float = 0.0, hop_mode: str = "overlap",
                      current: Optional[Dict[str, tuple]] = None) -> Plan:
     t0 = time.perf_counter()
     best = None
@@ -178,9 +202,10 @@ def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, 
     def one_way(a, b):
         return hop_ms(rtt, a, b)
 
-    def xfer(_a, _b):
-        return payload_bytes * 8 / (bandwidth_mbps * 1e6) * 1e3 if bandwidth_mbps else 0.0
+    def xfer(a, b):
+        return xfer_ms(bandwidth_mbps, a, b, payload_bytes)
 
+    feasible = []  # (bottleneck, order, rtts, xfers, first hop)
     for order in orders:
         if sum(min(n.max_layers(), num_layers) for n in order) < num_layers:
             continue
@@ -190,8 +215,15 @@ def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, 
         res = _dp_fixed_order(order, num_layers, rtts, xfers, hop_mode, current)
         if res is None:
             continue
-        bott, lat, cuts = res
         first = one_way(COORD, order[0].node_id)
+        bott = max(res[0], coord_ms + first) if hop_mode == "additive" else res[0]
+        feasible.append((bott, order, rtts, xfers, first))
+    # second pass: among the orders that reach the best bottleneck, the lowest total latency
+    b_star = min((c[0] for c in feasible), default=math.inf)
+    for bott, order, rtts, xfers, first in feasible:
+        if bott > b_star + 1e-9:
+            continue
+        bott, lat, cuts = _dp_fixed_order(order, num_layers, rtts, xfers, hop_mode, current, limit=b_star)
         if hop_mode == "additive":
             bott = max(bott, coord_ms + first)
         lat += coord_ms + first
@@ -211,8 +243,9 @@ def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, 
                 meta={"orders_searched": search_order, "hop_mode": hop_mode, "staged": current is not None})
 
 
-def plan_cost(plan: "Plan", specs: Sequence[NodeSpec], rtt: Dict, hop_mode: str = "overlap") -> float:
-    """Bottleneck of an existing plan under (possibly updated) node specs."""
+def plan_cost(plan: "Plan", specs: Sequence[NodeSpec], rtt: Dict, hop_mode: str = "overlap",
+              payload_bytes: int = 0, bandwidth_mbps=0.0) -> float:
+    """Bottleneck of an existing plan under (possibly updated) node specs, same model as the DP."""
     by = {s.node_id: s for s in specs}
     worst = 0.0
     for i, st in enumerate(plan.stages):
@@ -221,12 +254,13 @@ def plan_cost(plan: "Plan", specs: Sequence[NodeSpec], rtt: Dict, hop_mode: str 
             return math.inf
         comp = st.n * n.t_layer_ms
         nxt = plan.stages[i + 1].node_id if i + 1 < len(plan.stages) else COORD
-        worst = max(worst, comp + hop_ms(rtt, st.node_id, nxt) if hop_mode == "additive" else comp)
+        worst = max(worst, comp + hop_ms(rtt, st.node_id, nxt) if hop_mode == "additive"
+                    else max(comp, xfer_ms(bandwidth_mbps, st.node_id, nxt, payload_bytes)))
     return worst
 
 
 def memory_proportional(nodes: Sequence[NodeSpec], num_layers: int, rtt: Optional[Dict] = None,
-                        version: int = 1, payload_bytes: int = 0, bandwidth_mbps: float = 0.0,
+                        version: int = 1, payload_bytes: int = 0, bandwidth_mbps=0.0,
                         coord_ms: float = 0.0) -> Plan:
     """B2: split by free memory in join order (what exo / llama.cpp RPC do)."""
     t0 = time.perf_counter()

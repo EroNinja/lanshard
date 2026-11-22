@@ -87,12 +87,23 @@ def measure_rtt(address: str, payload: int = 8192, n: int = 20, netem: Optional[
             "p90": samples[int(len(samples) * 0.9)], "samples": samples}
 
 
+def measure_link(address: str, payload: int = 8192, n: int = 20, netem: Optional[T.NetemProfile] = None,
+                 big: int = 1 << 18) -> Dict:
+    """RTT at the decode payload, plus the link's bandwidth from how much longer a large echo takes."""
+    small = measure_rtt(address, payload, n, netem)["median"]
+    large = measure_rtt(address, big, max(5, n // 2), netem)["median"]
+    extra_ms = large - small  # the echo carries the extra bytes both ways
+    # under 0.2 ms the difference is noise (loopback, wired): report no limit
+    mbps = 2 * (big - payload) * 8 / (extra_ms * 1e3) if extra_ms > 0.2 else None
+    return {"rtt": small, "mbps": mbps}
+
+
 # --------------------------------------------------------------------------- worker
 class Worker:
     def __init__(self, coordinator: str, node_id: Optional[str] = None, device: Optional[str] = None,
                  dtype: Optional[str] = None, transport: str = "tcp", host: str = "0.0.0.0",
                  advertise: Optional[str] = None, slowdown: float = 1.0, mem_limit_gb: Optional[float] = None,
-                 netem: Optional[str] = None, profile_budget_s: float = 15.0):
+                 netem: Optional[str] = None, profile_budget_s: float = 15.0, wire_dtype: str = "float16"):
         self.coordinator = coordinator
         self.node_id = node_id or f"{socket.gethostname()}-{uuid.uuid4().hex[:4]}"
         self.device = device or default_device()
@@ -102,7 +113,7 @@ class Worker:
         elif os.environ.get("LANSHARD_THREADS"):
             torch.set_num_threads(int(os.environ["LANSHARD_THREADS"]))
         self.dtype = parse_dtype(dtype) if dtype else default_dtype(self.device)
-        self.wire_dtype = torch.float16
+        self.wire_dtype = parse_dtype(wire_dtype)
         self.transport = transport
         self.host = host
         self.advertise = advertise
@@ -161,11 +172,11 @@ class Worker:
     def _handle(self, msg: Dict):
         t = msg["type"]
         if t == "profile":
-            threading.Thread(target=self._do_profile, args=(msg,), daemon=True).start()
+            threading.Thread(target=self._guarded, args=(self._do_profile, msg), daemon=True).start()
         elif t == "ping_peers":
-            threading.Thread(target=self._do_ping, args=(msg,), daemon=True).start()
+            threading.Thread(target=self._guarded, args=(self._do_ping, msg), daemon=True).start()
         elif t == "prepare":
-            threading.Thread(target=self._do_prepare, args=(msg,), daemon=True).start()
+            threading.Thread(target=self._guarded, args=(self._do_prepare, msg), daemon=True).start()
         elif t == "release":
             self._release(int(msg["version"]))
         elif t == "free":
@@ -188,6 +199,15 @@ class Worker:
             self.stop.set()
             os._exit(0)
 
+    def _guarded(self, fn, msg):
+        """Run a control request on its own thread and report a failure to the coordinator,
+        which otherwise waits for the reply until its timeout."""
+        try:
+            fn(msg)
+        except Exception as e:
+            log.exception("%s failed", msg["type"])
+            self.ctrl.send({"type": "error", "node_id": self.node_id, "error": repr(e), "for": msg["type"]})
+
     def _do_profile(self, msg):
         model = msg["model"]
         log.info("profiling one layer of %s for %.0fs", model, msg.get("budget_s", self.profile_budget_s))
@@ -203,16 +223,17 @@ class Worker:
 
     def _do_ping(self, msg):
         payload = int(msg.get("payload", 8192))
-        out = {}
+        out, mbps = {}, {}
         for nid, addr in msg["peers"].items():
             if nid == self.node_id:
                 continue
             try:
-                out[nid] = measure_rtt(addr, payload, int(msg.get("n", 20)), self.netem)["median"]
+                m = measure_link(addr, payload, int(msg.get("n", 20)), self.netem)
+                out[nid], mbps[nid] = m["rtt"], m["mbps"]
             except OSError as e:
                 out[nid] = None
                 log.warning("ping %s failed: %s", nid, e)
-        self.ctrl.send({"type": "rtt", "node_id": self.node_id, "rtt": out})
+        self.ctrl.send({"type": "rtt", "node_id": self.node_id, "rtt": out, "mbps": mbps})
 
     def _do_prepare(self, msg):
         plan = Plan.from_dict(msg["plan"])
@@ -233,21 +254,26 @@ class Worker:
                 if missing:
                     self.runner.layers.update(self.loader.load_layers(missing, self.device, self.dtype))
                 load_s = time.perf_counter() - t0
+                # registered under the lock: a release of an older plan that arrives while this
+                # one is being staged must count these layers as in use
+                self.plans[plan.version] = plan
             # pre-connect to the successor so the first token does not pay connection setup
             for i, st in enumerate(plan.stages):
                 if st.node_id == self.node_id:
                     nxt = plan.stages[i + 1].node_id if i + 1 < len(plan.stages) else COORD
                     self._sender(nxt)
-            self.plans[plan.version] = plan
             log.info("plan v%d ready: layers %s (loaded %d in %.1fs)", plan.version,
                      f"{need[0]}-{need[-1]}" if need else "none", len(missing), load_s)
             self.ctrl.send({"type": "ready", "node_id": self.node_id, "version": plan.version,
                             "loaded": len(missing), "load_s": load_s, "mem": self._mem()})
-        except torch.OutOfMemoryError as e:
+        except Exception as e:  # out of memory or a loader failure: this node cannot stage the plan
+            oom = isinstance(e, torch.OutOfMemoryError)
+            if not oom:
+                log.exception("staging plan v%d failed", plan.version)
             if self.device.startswith("cuda"):
                 torch.cuda.empty_cache()
             self.ctrl.send({"type": "prepare_failed", "node_id": self.node_id, "version": plan.version,
-                            "error": "oom"})
+                            "error": "oom" if oom else repr(e)})
 
     def _capacity_layers(self, kv_tokens: int) -> Optional[int]:
         if self.mem_limit_gb is None or not self.profile:
@@ -257,11 +283,11 @@ class Worker:
         return max(0, int(budget // per))
 
     def _release(self, version: int):
-        self.plans.pop(version, None)
-        keep = set()
-        for p in self.plans.values():
-            keep.update(p.layers_of(self.node_id))
         with self.layer_lock:
+            self.plans.pop(version, None)
+            keep = set()
+            for p in self.plans.values():
+                keep.update(p.layers_of(self.node_id))
             for li in [li for li in self.runner.layers if li not in keep]:
                 del self.runner.layers[li]
         if self.device.startswith("cuda"):
@@ -293,8 +319,11 @@ class Worker:
             faulthandler.dump_traceback_later(60, repeat=False, file=sys.stdout)
             try:
                 self._process(h, x)
-            except Exception:
+            except Exception as e:
+                # the micro-batch is dropped here; tell the coordinator, whose only other signal
+                # is the retransmit timeout
                 log.exception("micro-batch %s failed", h.get("mb"))
+                self.ctrl.send({"type": "error", "node_id": self.node_id, "error": repr(e), "for": f"mb {h.get('mb')}"})
             finally:
                 faulthandler.cancel_dump_traceback_later()
 
@@ -380,11 +409,12 @@ def main(argv=None):
     ap.add_argument("--mem-limit-gb", type=float, help="advertise at most this much free memory")
     ap.add_argument("--netem", help="outbound delay emulation: wifi | none | profile.json | base=..,jitter=..")
     ap.add_argument("--profile-budget", type=float, default=15.0)
+    ap.add_argument("--wire-dtype", default="float16", help="dtype of hidden states sent to the next stage")
     ap.add_argument("--log", default="INFO")
     a = ap.parse_args(argv)
     logging.basicConfig(level=a.log, format=f"%(asctime)s [{a.node_id or 'worker'}] %(levelname)s %(message)s")
     Worker(a.coordinator, a.node_id, a.device, a.dtype, a.transport, a.host, a.advertise, a.slowdown,
-           a.mem_limit_gb, a.netem, a.profile_budget).run()
+           a.mem_limit_gb, a.netem, a.profile_budget, a.wire_dtype).run()
 
 
 if __name__ == "__main__":

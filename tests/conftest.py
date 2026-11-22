@@ -1,18 +1,16 @@
 import os
 import sys
 
-_status = {"code": 0}
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+os.environ.setdefault("LANSHARD_THREADS", "1")  # tiny-model workers: one thread each is fastest
 
 
-def pytest_sessionfinish(session, exitstatus):
-    _status["code"] = int(exitstatus)
+@pytest.fixture(scope="session")
+def tiny_model(tmp_path_factory):
+    from tiny_model import make_tiny_model
 
-
-def pytest_unconfigure(config):
-    """gRPC servers and Gloo process groups leave non-daemon native threads behind, which keep the
-    interpreter alive after the tests finish on Linux. On CI, exit hard once pytest has printed its
-    summary (this hook runs last), preserving the exit code."""
-    if os.environ.get("CI"):
-        sys.stdout.flush()
-        sys.stderr.flush()
-        os._exit(_status["code"])
+    return make_tiny_model(str(tmp_path_factory.mktemp("tiny-qwen2")))

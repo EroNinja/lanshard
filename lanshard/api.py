@@ -43,13 +43,19 @@ def serve_api(coord, host: str = "0.0.0.0", port: int = 8000):
             chat = self.path.startswith("/v1/chat/completions")
             if not chat and not self.path.startswith("/v1/completions"):
                 return self._json(404, {"error": "not found"})
-            ids = coord.encode_chat(req["messages"]) if chat else coord.tokenizer(req["prompt"])["input_ids"]
-            kw = dict(max_new=int(req.get("max_tokens", 256)), temperature=float(req.get("temperature", 0.0)),
-                      top_p=float(req.get("top_p", 1.0)), seed=req.get("seed"))
+            try:
+                ids = coord.encode_chat(req["messages"]) if chat else coord.tokenizer(req["prompt"])["input_ids"]
+                kw = dict(max_new=int(req.get("max_tokens", 256)), temperature=float(req.get("temperature", 0.0)),
+                          top_p=float(req.get("top_p", 1.0)), seed=req.get("seed"))
+            except (KeyError, TypeError, ValueError) as e:
+                return self._json(400, {"error": f"bad request: {e!r}"})
             cid = f"{'chatcmpl' if chat else 'cmpl'}-{uuid.uuid4().hex[:12]}"
             if not req.get("stream"):
-                r = coord.submit(ids, **kw)
-                out = r.future.result()
+                try:
+                    r = coord.submit(ids, **kw)
+                    out = r.future.result()
+                except (RuntimeError, ValueError) as e:  # the cluster cannot serve (see Coordinator._fail_all)
+                    return self._json(503, {"error": str(e)})
                 text = coord.tokenizer.decode(out, skip_special_tokens=True)
                 choice = {"index": 0, "finish_reason": r.finish_reason}
                 choice.update({"message": {"role": "assistant", "content": text}} if chat else {"text": text})
@@ -58,7 +64,10 @@ def serve_api(coord, host: str = "0.0.0.0", port: int = 8000):
                                         "usage": {"prompt_tokens": len(ids), "completion_tokens": len(out),
                                                   "total_tokens": len(ids) + len(out)}})
             q: "queue.Queue" = queue.Queue()
-            r = coord.submit(ids, on_token=q.put, **kw)
+            try:
+                r = coord.submit(ids, on_token=q.put, **kw)
+            except (RuntimeError, ValueError) as e:
+                return self._json(503, {"error": str(e)})
             r.future.add_done_callback(lambda _: q.put(None))
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")

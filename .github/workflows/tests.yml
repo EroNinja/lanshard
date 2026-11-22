@@ -3,7 +3,12 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # the model code depends on transformers internals, so test the oldest and newest major line
+        transformers: ["transformers<5", "transformers"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -12,6 +17,6 @@ jobs:
       - name: Install (CPU-only torch)
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install transformers safetensors huggingface_hub grpcio protobuf psutil numpy pytest pytest-timeout
-      - name: Unit tests (partitioner, transports; model test skips without cached weights)
-        run: python -m pytest tests -q -v --timeout 120
+          pip install "${{ matrix.transformers }}" safetensors huggingface_hub grpcio protobuf psutil numpy pytest pytest-timeout
+      - name: Tests (the 0.5B model tests skip without cached weights; the tiny-model end-to-end tests run)
+        run: python -m pytest tests -q -v --timeout 300

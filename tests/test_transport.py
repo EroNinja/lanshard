@@ -1,14 +1,10 @@
-import os
-import sys
 import threading
 import time
 
 import pytest
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from lanshard import transport as T  # noqa: E402
+from lanshard import transport as T
 
 
 @pytest.mark.parametrize("backend", T.BACKENDS)
@@ -24,10 +20,14 @@ def test_roundtrip(backend):
     s = T.connect(backend, f"127.0.0.1:{srv.port}")
     a = torch.randn(5, 4096).half()
     b = torch.randn(2, 3).to(torch.bfloat16)
-    s.send({"i": 1}, a)
-    s.send({"i": 2}, b)
-    s.send({"i": 3})
-    assert ev.wait(30)
+    try:
+        s.send({"i": 1}, a)
+        s.send({"i": 2}, b)
+        s.send({"i": 3})
+        assert ev.wait(30)
+    finally:  # an open gRPC stream keeps the interpreter alive after the tests finish
+        s.close()
+        srv.close()
     assert [h["i"] for h, _ in got] == [1, 2, 3]  # FIFO
     assert torch.equal(got[0][1], a)
     assert torch.equal(got[1][1], b)
@@ -59,3 +59,88 @@ def test_netem_spec_parsing():
     assert p.base_ms == 3 and p.jitter_ms == 2 and p.spike_ms == 30 and p.rate_mbps == 400
     assert T.NetemProfile.from_spec("wifi").active
     assert not T.NetemProfile.from_spec("none").active
+
+
+def test_measure_link_recovers_the_bandwidth():
+    from lanshard.worker import EchoServer, measure_link
+
+    echo = EchoServer("127.0.0.1")
+    addr = f"127.0.0.1:{echo.port}"
+    m = measure_link(addr, 8192, 10, T.NetemProfile(base_ms=2, rate_mbps=20, seed=0))
+    assert m["mbps"] == pytest.approx(20, rel=0.25)
+    assert m["rtt"] > 4
+    fast = measure_link(addr, 8192, 10)["mbps"]
+    assert fast is None or fast > 1000  # loopback: no limit worth modelling
+    echo.lsock.close()
+
+
+def test_netem_rate_is_link_occupancy():
+    """Five 25 KB messages on a 2 Mbps link take 0.1 s each, one after the other."""
+    got, ev = [], threading.Event()
+
+    def on(h, t):
+        got.append(time.perf_counter())
+        if len(got) == 5:
+            ev.set()
+
+    srv = T.serve("tcp", "127.0.0.1", 0, on)
+    s = T.connect("tcp", f"127.0.0.1:{srv.port}", T.NetemProfile(rate_mbps=2.0))
+    t0 = time.perf_counter()
+    try:
+        for _ in range(5):
+            s.send({}, torch.zeros(25_000, dtype=torch.uint8))
+        assert ev.wait(30)
+    finally:
+        s.close()
+        srv.close()
+    assert got[0] - t0 == pytest.approx(0.1, abs=0.05)
+    assert got[-1] - t0 == pytest.approx(0.5, abs=0.08)
+
+
+def _wait_until(pred, timeout=10.0):
+    end = time.time() + timeout
+    while time.time() < end:
+        if pred():
+            return True
+        time.sleep(0.02)
+    return False
+
+
+def test_tcp_sender_reconnects_after_the_link_breaks():
+    got = []
+    srv = T.serve("tcp", "127.0.0.1", 0, lambda h, t: got.append(h["i"]))
+    s = T.connect("tcp", f"127.0.0.1:{srv.port}", asynchronous=False)
+    try:
+        s.send({"i": 0})
+        assert _wait_until(lambda: got == [0])
+        srv.close()  # the peer goes away (restart, Wi-Fi drop) and comes back on the same address
+        srv = T.serve("tcp", "127.0.0.1", srv.port, lambda h, t: got.append(h["i"]))
+        for i in range(1, 6):  # a send or two can be lost in the reset; the link must then recover
+            try:
+                s.send({"i": i})
+            except OSError:
+                pass
+            time.sleep(0.05)
+        assert _wait_until(lambda: 5 in got)
+    finally:
+        s.close()
+        srv.close()
+
+
+def test_grpc_sender_reports_a_broken_stream():
+    srv = T.serve("grpc", "127.0.0.1", 0, lambda h, t: None)
+    s = T.connect("grpc", f"127.0.0.1:{srv.port}", asynchronous=False)
+    try:
+        s.send({"i": 0})
+        srv.close()
+
+        def send_fails():
+            try:
+                s.send({"i": 1})
+            except ConnectionError:
+                return True
+            return False
+
+        assert _wait_until(send_fails)  # used to queue messages forever with no error
+    finally:
+        s.close()

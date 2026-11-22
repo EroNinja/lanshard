@@ -240,7 +240,10 @@ def make_rotary(cfg, device: str):
     meta = _meta_model(cfg, torch.float32)
     cls = type(meta.model.rotary_emb)
     del meta
-    return cls(config=cfg, device=device)
+    try:
+        return cls(config=cfg, device=device)
+    except TypeError:  # transformers >= 5 dropped the device argument
+        return cls(config=cfg).to(device)
 
 
 try:  # torch >= 2.5 does grouped-query attention natively (no K/V copy)

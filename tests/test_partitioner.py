@@ -12,14 +12,14 @@ from lanshard.partitioner import (COORD, InfeasibleError, NodeSpec, hop_ms, late
 GB = 1 << 30
 
 
-def brute_force(nodes, L, rtt, mode="additive"):
-    """Minimum bottleneck over every ordered subset and every contiguous split."""
-    best = float("inf")
+def brute_force(nodes, L, rtt, mode="additive", with_latency=False):
+    """Minimum bottleneck (then minimum total latency) over every ordered subset and contiguous split."""
+    best = (float("inf"), float("inf"))
     for k in range(1, len(nodes) + 1):
         for order in itertools.permutations(nodes, k):
             for cuts in itertools.combinations(range(1, L), k - 1):
                 bounds = (0,) + cuts + (L,)
-                costs, ok = [], True
+                costs, ok, lat = [], True, hop_ms(rtt, COORD, order[0].node_id)
                 for i, n in enumerate(order):
                     m = bounds[i + 1] - bounds[i]
                     if m > n.max_layers():
@@ -28,11 +28,33 @@ def brute_force(nodes, L, rtt, mode="additive"):
                     nxt = order[i + 1].node_id if i + 1 < k else COORD
                     comp = m * n.t_layer_ms
                     costs.append(comp + hop_ms(rtt, n.node_id, nxt) if mode == "additive" else comp)
+                    lat += comp + hop_ms(rtt, n.node_id, nxt)
                 if ok:
                     if mode == "additive":
                         costs.append(hop_ms(rtt, COORD, order[0].node_id))
-                    best = min(best, max(costs))
-    return best
+                    best = min(best, (round(max(costs), 6), round(lat, 6)))
+    return best if with_latency else best[0]
+
+
+def test_dp_is_lexicographically_optimal_on_random_clusters():
+    """Lowest bottleneck first, then lowest single-stream latency, against brute force."""
+    import random
+
+    rng = random.Random(0)
+    for _ in range(60):
+        nodes = [NodeSpec(f"n{i}", rng.choice([1, 1.5, 2, 3, 5]), rng.randint(2, 9) * GB, GB)
+                 for i in range(rng.randint(2, 4))]
+        ids = [n.node_id for n in nodes] + [COORD]
+        rtt = {a: {b: rng.choice([2, 4, 8, 20, 60]) for b in ids if b != a} for a in ids}
+        L = rng.randint(6, 10)
+        for mode in ("additive", "overlap"):
+            want = brute_force(nodes, L, rtt, mode, with_latency=True)
+            if want[0] == float("inf"):
+                with pytest.raises(InfeasibleError):
+                    latency_balanced(nodes, L, rtt, hop_mode=mode)
+                continue
+            p = latency_balanced(nodes, L, rtt, hop_mode=mode)
+            assert (p.bottleneck_ms, p.latency_ms) == pytest.approx(want)
 
 
 def test_dp_matches_brute_force():
@@ -135,3 +157,17 @@ def test_expected_layer_ms_interpolates():
     assert expected_layer_ms(prof, 3, 0) == pytest.approx(2.5)
     assert expected_layer_ms(prof, 16, 0) == pytest.approx(9.0)
     assert expected_layer_ms(prof, 0, 10) == pytest.approx(1.0)
+
+
+def test_slow_link_limits_a_stage_by_its_occupancy():
+    """A stage cannot emit micro-batches faster than its outbound link carries them."""
+    from lanshard.partitioner import plan_cost
+
+    nodes = [NodeSpec(n, 1.0, 8 * GB, 100 << 20) for n in ("a", "b", "c")]
+    slow = {"c": {"a": 8.0, "b": 8.0, COORD: 8.0}}  # Mbps; 16 KB takes 16 ms on c's links
+    p = latency_balanced(nodes, 24, {}, payload_bytes=16_000, bandwidth_mbps=slow)
+    assert sorted(s.node_id for s in p.stages) == ["a", "b"]  # 12 ms on two nodes beats 16 ms with c
+    assert p.bottleneck_ms == pytest.approx(12.0)
+    with_c = latency_balanced(nodes, 24, {})
+    assert plan_cost(with_c, nodes, {}) == pytest.approx(8.0)
+    assert plan_cost(with_c, nodes, {}, payload_bytes=16_000, bandwidth_mbps=slow) == pytest.approx(16.0)
