@@ -104,8 +104,15 @@ def hop_ms(rtt: Dict[str, Dict[str, float]], a: str, b: str, payload_bytes: int 
 
 
 def _dp_fixed_order(order: Sequence[NodeSpec], L: int, rtts: Sequence[float], xfers: Sequence[float],
-                    hop_mode: str = "overlap", current: Optional[Dict[str, tuple]] = None):
+                    hop_mode: str = "overlap", current: Optional[Dict[str, tuple]] = None,
+                    limit: Optional[float] = None):
     """Exact min-max contiguous split for a fixed node order.
+
+    With ``limit`` it instead returns the split with the lowest total latency among those whose
+    every stage costs at most ``limit``. Running it once without and once with the optimal
+    bottleneck as the limit gives the exact lexicographic optimum (bottleneck, then latency);
+    breaking ties inside the min-max pass alone does not, because the best prefix by bottleneck
+    is not always the best prefix by latency.
 
     rtts[i]/xfers[i]: one-way latency and link-occupancy time of node i's outbound hop.
     hop_mode "overlap": with enough micro-batches in flight a hop's latency overlaps other
@@ -144,6 +151,12 @@ def _dp_fixed_order(order: Sequence[NodeSpec], L: int, rtts: Sequence[float], xf
             elif current is not None:
                 pass  # a node joining the pipeline holds nothing yet
             cost = np.where(bad, INF, cost)
+            if limit is not None:
+                tl = np.where(cost <= limit + 1e-9, lat[j - 1][:e] + latc_all, INF)
+                pick = int(np.argmin(tl))
+                if np.isfinite(tl[pick]):
+                    f[j][e], lat[j][e], arg[j][e] = max(f[j - 1][pick], cost[pick]), tl[pick], pick
+                continue
             prev = f[j - 1][:e]
             cand = np.maximum(prev, cost)
             best = cand.min()
@@ -181,6 +194,7 @@ def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, 
     def xfer(_a, _b):
         return payload_bytes * 8 / (bandwidth_mbps * 1e6) * 1e3 if bandwidth_mbps else 0.0
 
+    feasible = []  # (bottleneck, order, rtts, xfers, first hop)
     for order in orders:
         if sum(min(n.max_layers(), num_layers) for n in order) < num_layers:
             continue
@@ -190,8 +204,15 @@ def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, 
         res = _dp_fixed_order(order, num_layers, rtts, xfers, hop_mode, current)
         if res is None:
             continue
-        bott, lat, cuts = res
         first = one_way(COORD, order[0].node_id)
+        bott = max(res[0], coord_ms + first) if hop_mode == "additive" else res[0]
+        feasible.append((bott, order, rtts, xfers, first))
+    # second pass: among the orders that reach the best bottleneck, the lowest total latency
+    b_star = min((c[0] for c in feasible), default=math.inf)
+    for bott, order, rtts, xfers, first in feasible:
+        if bott > b_star + 1e-9:
+            continue
+        bott, lat, cuts = _dp_fixed_order(order, num_layers, rtts, xfers, hop_mode, current, limit=b_star)
         if hop_mode == "additive":
             bott = max(bott, coord_ms + first)
         lat += coord_ms + first
