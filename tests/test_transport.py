@@ -1,14 +1,10 @@
-import os
-import sys
 import threading
 import time
 
 import pytest
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from lanshard import transport as T  # noqa: E402
+from lanshard import transport as T
 
 
 @pytest.mark.parametrize("backend", T.BACKENDS)
@@ -24,10 +20,14 @@ def test_roundtrip(backend):
     s = T.connect(backend, f"127.0.0.1:{srv.port}")
     a = torch.randn(5, 4096).half()
     b = torch.randn(2, 3).to(torch.bfloat16)
-    s.send({"i": 1}, a)
-    s.send({"i": 2}, b)
-    s.send({"i": 3})
-    assert ev.wait(30)
+    try:
+        s.send({"i": 1}, a)
+        s.send({"i": 2}, b)
+        s.send({"i": 3})
+        assert ev.wait(30)
+    finally:  # an open gRPC stream keeps the interpreter alive after the tests finish
+        s.close()
+        srv.close()
     assert [h["i"] for h, _ in got] == [1, 2, 3]  # FIFO
     assert torch.equal(got[0][1], a)
     assert torch.equal(got[1][1], b)
