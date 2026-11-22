@@ -123,3 +123,17 @@ def test_paused_replan_with_requeue_is_token_identical(tiny_model, reference):
         assert r.future.result(timeout=120) == reference
         events = [e["event"] for e in c.events]
         assert "staging_oom_fallback" in events and "requeue_for_switch" in events and r.migrations > 0
+
+
+def test_migration_tolerates_a_late_kv_free(tiny_model, reference):
+    """Control messages (free) and micro-batches travel on different sockets, so a free for a
+    migrated request can reach a worker after that request's re-prefill on the new plan."""
+    with _cluster(tiny_model, _workers(tiny_model, 6)) as c:
+        send_free = c._send_free
+        c._send_free = lambda v, ids: threading.Timer(0.3, send_free, (v, ids)).start()
+        r = _submit_and_wait_for(c, 30)
+        cur = c.plans[c.active_version]
+        c.scale[cur.stages[0].node_id] = 3.0
+        assert c.install_plan(c.compute_plan(current=cur))
+        assert r.future.result(timeout=120) == reference
+        assert r.migrations > 0

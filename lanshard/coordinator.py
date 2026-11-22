@@ -91,6 +91,7 @@ class Request:
     on_token: Optional[Callable[[int], None]] = None
     # runtime
     tokens: List[int] = field(default_factory=list)
+    kv: int = 0  # id of this request's KV cache on the workers; a new one for every (re)fill
     cached: int = 0
     prefill_target: int = 0
     version: Optional[int] = None
@@ -180,6 +181,7 @@ class Coordinator:
         self.waiting: deque = deque()
         self.active: Dict[int, Request] = {}
         self.next_rid = 1
+        self.next_kv = 1
         self.inflight_mbs: Dict[int, Dict] = {}
         self.next_mb = 1
         self.pending_free: Dict[int, List[int]] = {}
@@ -486,15 +488,23 @@ class Coordinator:
 
     def _requeue(self, r: Request):
         """Return an admitted request to the front of the queue, keeping its generated text."""
-        self.pending_free.setdefault(r.version, []).append(r.rid)
+        self.pending_free.setdefault(r.version, []).append(r.kv)
         self.active.pop(r.rid, None)
         r.cached, r.inflight, r.version, r.migrate_to = 0, False, None, None
         r.restarts += 1
         r.migrations += 1
         self.waiting.appendleft(r)
 
+    def _new_kv(self, r: Request):
+        """Give ``r`` a fresh KV cache id. Frees go over the control socket and micro-batches over
+        the data sockets, so a free can reach a worker after the request's next prefill. With a
+        new id per fill, a late free can only ever drop the old cache."""
+        r.kv = self.next_kv
+        self.next_kv += 1
+
     def _migrate(self, r: Request, new: int):
-        self.pending_free.setdefault(r.version, []).append(r.rid)
+        self.pending_free.setdefault(r.version, []).append(r.kv)
+        self._new_kv(r)
         r.version = new
         r.cached = 0
         r.prefill_target = len(r.tokens)
@@ -600,7 +610,7 @@ class Coordinator:
             # everything generated so far as the new prompt (the one case we recompute)
             for r in list(self.active.values()):
                 if r.version in hit:
-                    self.pending_free.setdefault(r.version, []).append(r.rid)
+                    self.pending_free.setdefault(r.version, []).append(r.kv)
                     del self.active[r.rid]
                     r.cached, r.inflight, r.version = 0, False, None
                     r.restarts += 1
@@ -722,6 +732,7 @@ class Coordinator:
                 break
             self.waiting.popleft()
             r.version = self.active_version
+            self._new_kv(r)
             r.t_admit = time.time()
             if r.restarts:  # resume from what has been generated so far
                 r.prefill_target = len(r.tokens)
@@ -762,7 +773,7 @@ class Coordinator:
             mb_size = max(1, min(self.sched.max_decode_mb, math.ceil(len(decoding) / depth))) if decoding else 0
             while ready_dec and infl_dec < depth:
                 take, ready_dec = ready_dec[:mb_size], ready_dec[mb_size:]
-                segs = [Segment(r.rid, r.cached, 1, r.max_len) for r in take]
+                segs = [Segment(r.kv, r.cached, 1, r.max_len) for r in take]
                 for r in take:
                     r.inflight = True
                 out.append((v, "decode", take, segs))
@@ -774,7 +785,7 @@ class Coordinator:
                     if budget <= 0:
                         break
                     n = min(budget, r.prefill_target - r.cached)
-                    segs.append(Segment(r.rid, r.cached, n, r.max_len))
+                    segs.append(Segment(r.kv, r.cached, n, r.max_len))
                     take.append(r)
                     ready_pre.remove(r)
                     r.inflight = True
@@ -901,28 +912,37 @@ class Coordinator:
         t0 = time.perf_counter()
         rows, reqs = [], []
         off = 0
-        for rid, s in zip(rec["rids"], rec["segs"]):
+
+        def current(rid, s):
+            """The request this segment was computed for, unless it has been requeued or migrated
+            since the dispatch (node loss): then the result belongs to a cache that no longer exists."""
             r = self.active.get(rid)
+            return r if r is not None and r.kv == s.rid else None
+
+        for rid, s in zip(rec["rids"], rec["segs"]):
+            r = current(rid, s)
             if r is not None and s.start + s.n >= r.prefill_target:
                 rows.append(off + s.n - 1)
-                reqs.append(r)
+                reqs.append((r, s))
             off += s.n
         new_tokens = []
         if rows:
             logits = self.head.logits(hidden[rows])
-            for i, r in enumerate(reqs):
+            for i, (r, _) in enumerate(reqs):
                 new_tokens.append(self._sample(r, logits[i]))
         sample_ms = (time.perf_counter() - t0) * 1e3
         now = time.time()
         finished = []
         with self.cv:
             for rid, s in zip(rec["rids"], rec["segs"]):
-                r = self.active.get(rid)
+                r = current(rid, s)
                 if r is None:
                     continue
                 r.cached = s.start + s.n
                 r.inflight = False
-            for r, tok in zip(reqs, new_tokens):
+            for (r, s), tok in zip(reqs, new_tokens):
+                if current(r.rid, s) is not r:
+                    continue
                 r.tokens.append(tok)
                 r.generated += 1
                 r.token_times.append(now)
@@ -946,7 +966,7 @@ class Coordinator:
                     finished.append(r)
             for r in finished:
                 self.active.pop(r.rid, None)
-                self.pending_free.setdefault(r.version, []).append(r.rid)
+                self.pending_free.setdefault(r.version, []).append(r.kv)
                 r.t_done = now
             for rid in rec["rids"]:  # deferred migrations, after this step's token is appended
                 r = self.active.get(rid)
