@@ -233,12 +233,14 @@ class Worker:
                 if missing:
                     self.runner.layers.update(self.loader.load_layers(missing, self.device, self.dtype))
                 load_s = time.perf_counter() - t0
+                # registered under the lock: a release of an older plan that arrives while this
+                # one is being staged must count these layers as in use
+                self.plans[plan.version] = plan
             # pre-connect to the successor so the first token does not pay connection setup
             for i, st in enumerate(plan.stages):
                 if st.node_id == self.node_id:
                     nxt = plan.stages[i + 1].node_id if i + 1 < len(plan.stages) else COORD
                     self._sender(nxt)
-            self.plans[plan.version] = plan
             log.info("plan v%d ready: layers %s (loaded %d in %.1fs)", plan.version,
                      f"{need[0]}-{need[-1]}" if need else "none", len(missing), load_s)
             self.ctrl.send({"type": "ready", "node_id": self.node_id, "version": plan.version,
@@ -257,11 +259,11 @@ class Worker:
         return max(0, int(budget // per))
 
     def _release(self, version: int):
-        self.plans.pop(version, None)
-        keep = set()
-        for p in self.plans.values():
-            keep.update(p.layers_of(self.node_id))
         with self.layer_lock:
+            self.plans.pop(version, None)
+            keep = set()
+            for p in self.plans.values():
+                keep.update(p.layers_of(self.node_id))
             for li in [li for li in self.runner.layers if li not in keep]:
                 del self.runner.layers[li]
         if self.device.startswith("cuda"):
