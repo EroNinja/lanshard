@@ -527,7 +527,7 @@ class Coordinator:
                     moved += 1
             self.cv.notify_all()
         self.event("migrate", old=old, new=new, moved_now=moved, moved_on_return=waiting,
-                   left_to_drain=sum(1 for r in self.active.values() if r.version == old) - moved - waiting)
+                   left_to_drain=sum(1 for r in self.active.values() if r.version == old) - waiting)
 
     def _requeue(self, r: Request):
         """Return an admitted request to the front of the queue, keeping its generated text."""
