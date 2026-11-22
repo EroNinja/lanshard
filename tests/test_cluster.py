@@ -22,8 +22,18 @@ pytestmark = pytest.mark.skipif(not _have_model() or os.environ.get("LANSHARD_SK
                                 reason="model not cached or slow tests disabled")
 
 QS = ["Explain pipeline parallelism in detail, with an example."]
-# 0.5B: ~28 MB/layer + 8 MB KV reserve/layer; 0.3 GB overhead -> each worker holds at most 16 layers
-WORKERS = [{"node_id": "w1", "mem_limit_gb": 0.88}, {"node_id": "w2", "mem_limit_gb": 0.88}]
+
+
+def _workers():
+    """Two workers that hold at most 16 of the 24 layers each, whatever dtype this machine computes in
+    (FP16 on a GPU, FP32 on CPU; a fixed cap in GB only fits one of them)."""
+    from lanshard.model_utils import LayerLoader, default_device, default_dtype
+
+    loader, dtype = LayerLoader(MODEL), default_dtype(default_device())
+    per = loader.layer_param_bytes(0, dtype) + loader.geom.kv_bytes_per_token_per_layer(dtype) * 16384
+    limit = 0.3 + 16.5 * per / (1 << 30)
+    wire = str(dtype).replace("torch.", "")  # lossless hops, so the cut positions cannot change the output
+    return [{"node_id": n, "mem_limit_gb": limit, "wire_dtype": wire} for n in ("w1", "w2")], wire
 
 
 def _run(mode: str):
@@ -31,8 +41,9 @@ def _run(mode: str):
     from lanshard.coordinator import DriftConfig
     from lanshard.partitioner import Plan, Stage
 
-    with local_cluster(MODEL, WORKERS, drift=DriftConfig(enabled=False), coord_netem=None, profile_budget=2,
-                       overhead_gb=0.3) as c:
+    workers, wire = _workers()
+    with local_cluster(MODEL, workers, drift=DriftConfig(enabled=False), coord_netem=None, profile_budget=2,
+                       overhead_gb=0.3, wire_dtype=wire) as c:
         reqs = [c.submit(c.encode_chat([{"role": "user", "content": q}]), max_new=200, ignore_eos=True) for q in QS]
         events = []
         if mode != "none":
