@@ -569,6 +569,13 @@ class JsonConn:
             return None
         return json.loads(line)
 
+    def shutdown(self):
+        """Unblock a reader waiting in ``recv`` (closing the socket alone does not)."""
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+
     def close(self):
         try:
             self.sock.close()

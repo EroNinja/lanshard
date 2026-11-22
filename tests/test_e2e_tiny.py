@@ -3,6 +3,7 @@
 Everything runs in FP32 on CPU with one request, so every plan must give exactly the tokens that
 stock ``transformers`` gives, including across mid-generation re-splits.
 """
+import signal
 import threading
 
 import pytest
@@ -137,3 +138,60 @@ def test_migration_tolerates_a_late_kv_free(tiny_model, reference):
         assert c.install_plan(c.compute_plan(current=cur))
         assert r.future.result(timeout=120) == reference
         assert r.migrations > 0
+
+
+# ---------------------------------------------------------------------------- failures
+def _first_stage_node(c):
+    return c.plans[c.active_version].stages[0].node_id
+
+
+def test_killed_worker_is_replaced_and_output_is_identical(tiny_model, reference):
+    with _cluster(tiny_model, _workers(tiny_model, 6, n=3)) as c:
+        r = _submit_and_wait_for(c, 30)
+        victim = _first_stage_node(c)
+        c.worker_procs[victim].kill()
+        assert r.future.result(timeout=120) == reference
+        assert r.restarts > 0 and victim not in [s.node_id for s in c.plans[c.active_version].stages]
+
+
+@pytest.mark.skipif(not hasattr(signal, "SIGSTOP"), reason="needs SIGSTOP")
+def test_frozen_worker_is_detected_by_heartbeat(tiny_model, reference):
+    """A suspended laptop keeps its sockets open, so only missing heartbeats reveal the loss."""
+    with _cluster(tiny_model, _workers(tiny_model, 6, n=3), heartbeat_timeout_s=3.0) as c:
+        r = _submit_and_wait_for(c, 30)
+        victim = _first_stage_node(c)
+        c.worker_procs[victim].send_signal(signal.SIGSTOP)
+        assert r.future.result(timeout=120) == reference
+        assert "heartbeat_timeout" in [e["event"] for e in c.events]
+
+
+def test_node_loss_during_a_replan_is_not_dropped(tiny_model, reference):
+    with _cluster(tiny_model, _workers(tiny_model, 6, n=3)) as c:
+        r = _submit_and_wait_for(c, 30)
+        with c.cv:
+            c.replanning = True  # as if a drift replan were in progress
+        c.worker_procs[_first_stage_node(c)].kill()
+        c._wait(lambda: "node_lost" in [e["event"] for e in c.events], 30, "node loss")
+        with c.cv:
+            c.replanning = False
+            c.cv.notify_all()
+        assert r.future.result(timeout=120) == reference
+
+
+def test_requests_fail_when_the_survivors_cannot_hold_the_model(tiny_model):
+    with _cluster(tiny_model, _workers(tiny_model, 6, n=2)) as c:
+        r = _submit_and_wait_for(c, 30)
+        c.worker_procs[_first_stage_node(c)].kill()
+        with pytest.raises(RuntimeError, match="cannot hold the model"):
+            r.future.result(timeout=60)
+        with pytest.raises(RuntimeError, match="cannot hold the model"):
+            c.submit(PROMPT, max_new=4)
+
+
+def test_worker_lost_before_the_first_plan_does_not_poison_the_cluster(tiny_model, reference):
+    with _cluster(tiny_model, _workers(tiny_model, 6, n=3), bootstrap=False) as c:
+        c._wait(lambda: len(c.alive_nodes()) == 3, 60, "workers to join")
+        c.worker_procs["w3"].kill()
+        c._wait(lambda: len(c.alive_nodes()) == 2, 30, "node loss")
+        c.bootstrap(2)
+        assert c.generate(PROMPT, max_new=MAX_NEW, ignore_eos=True) == reference

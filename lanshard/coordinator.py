@@ -136,6 +136,7 @@ class Node:
     under_since: Optional[float] = None
     ready_versions: set = field(default_factory=set)
     failed_versions: set = field(default_factory=set)
+    last_seen: float = field(default_factory=time.time)
 
 
 class Coordinator:
@@ -144,7 +145,8 @@ class Coordinator:
                  advertise: Optional[str] = None, policy: str = "latency",
                  sched: Optional[SchedulerConfig] = None, drift: Optional[DriftConfig] = None,
                  netem: Optional[str] = None, profile_budget_s: float = 15.0, overhead_gb: float = 0.6,
-                 rtt_payload: Optional[int] = None, wire_dtype: str = "float16"):
+                 rtt_payload: Optional[int] = None, wire_dtype: str = "float16",
+                 heartbeat_timeout_s: float = 15.0):
         self.model = model
         self.device = device or default_device()
         self.dtype = parse_dtype(dtype) if dtype else default_dtype(self.device)
@@ -157,6 +159,8 @@ class Coordinator:
         self.netem = T.NetemProfile.from_spec(netem)
         self.profile_budget_s = profile_budget_s
         self.overhead = int(overhead_gb * (1 << 30))
+        self.heartbeat_timeout_s = heartbeat_timeout_s  # workers report every second
+        self.unservable: Optional[str] = None  # set when the live nodes cannot hold the model
 
         self.cfg = load_config(model)
         self.num_layers = self.cfg.num_hidden_layers
@@ -283,7 +287,8 @@ class Coordinator:
                                mem_free_gb=round(node.info["mem_free"] / 2 ** 30, 2))
                 elif node is None:
                     continue
-                elif t == "profile_result":
+                node.last_seen = time.time()
+                if t == "profile_result":
                     node.profile = msg["profile"]
                     node.info["mem_free"] = min(node.info["mem_free"], msg.get("mem_free", node.info["mem_free"]))
                 elif t == "rtt":
@@ -419,8 +424,7 @@ class Coordinator:
         self._wait(lambda: all(plan.version in n.ready_versions or plan.version in n.failed_versions
                                or not n.alive for n in members), timeout, f"plan v{plan.version}")
         if any(not n.alive for n in members):
-            self.event("plan_aborted", version=plan.version, reason="node lost while staging")
-            return False
+            return self._abort_plan(plan, "node lost while staging")
         if any(plan.version in n.failed_versions for n in members):
             # not enough memory to hold old and new layers at once: stop admitting,
             # drain the old plan, release it, then stage again
@@ -448,7 +452,11 @@ class Coordinator:
             for n in members:
                 n.failed_versions.discard(plan.version)
                 n.conn.send({"type": "prepare", "plan": plan.to_dict(), "addrs": addrs, **self._prep_extra()})
-            self._wait(lambda: all(plan.version in n.ready_versions for n in members), timeout, "restage")
+            self._wait(lambda: all(plan.version in n.ready_versions or plan.version in n.failed_versions
+                                   or not n.alive for n in members), timeout, "restage")
+            if not all(plan.version in n.ready_versions and n.alive for n in members):
+                # admission stays paused and the old plan is gone: the caller must recover
+                return self._abort_plan(plan, "restage failed")
             self.last_pause_s = time.time() - t_pause
         stage_s = time.time() - t0
         self._sender(plan.stages[0].node_id)  # connect before switching
@@ -456,6 +464,7 @@ class Coordinator:
             old = self.active_version
             self.active_version = plan.version
             self.admission_paused = False
+            self.unservable = None
             self.cv.notify_all()
         self.last_switch = time.time()
         self.event("switch", version=plan.version, old=old, stage_s=round(stage_s, 2), plan=plan.summary())
@@ -463,6 +472,11 @@ class Coordinator:
             self._migrate_stragglers(old, plan.version)
         self._maybe_release()
         return True
+
+    def _abort_plan(self, plan: Plan, reason: str) -> bool:
+        self.event("plan_aborted", version=plan.version, reason=reason)
+        self._release_version(plan.version)  # nodes that did stage it must not keep its layers
+        return False
 
     def _migrate_stragglers(self, old: int, new: int):
         """Move long-running old-plan requests onto the new plan instead of waiting for them.
@@ -532,26 +546,94 @@ class Coordinator:
         for v in stale:
             self._release_version(v)
 
-    def replan(self, reason: str, exclude: Optional[set] = None):
-        with self.lock:
-            if self.replanning:
-                return
+    def _begin_replan(self, wait: bool) -> bool:
+        with self.cv:
+            while self.replanning:
+                if not wait:
+                    return False
+                self.cv.wait(0.5)
             self.replanning = True
+            return True
+
+    def _end_replan(self):
+        with self.cv:
+            self.replanning = False
+            self.last_replan = time.time()
+            self.cv.notify_all()
+
+    def replan(self, reason: str):
+        """Drift-triggered replan: switch only if ``_choose_plan`` finds a plan worth it."""
+        if not self._begin_replan(wait=False):
+            return
         try:
             self.event("replan_trigger", reason=reason, scale=dict(self.scale))
             cur = self.plans.get(self.active_version)
-            if not cur or exclude:
-                self.install_plan(self.compute_plan(self.policy, exclude))
-                return
-            plan = self._choose_plan(cur)
+            plan = self._choose_plan(cur) if cur else None
             if plan is not None:
                 self.install_plan(plan)
         except InfeasibleError as e:
             self.event("replan_infeasible", error=str(e))
+        except Exception as e:  # a node died mid-switch, a timeout: recover below
+            log.exception("replan failed")
+            self.event("replan_failed", error=repr(e))
         finally:
-            with self.lock:
-                self.replanning = False
-                self.last_replan = time.time()
+            self._end_replan()
+        self._ensure_servable(reason)
+
+    def _servable(self) -> bool:
+        plan = self.plans.get(self.active_version)
+        return plan is not None and all(self.nodes[s.node_id].alive for s in plan.stages)
+
+    def _ensure_servable(self, reason: str, attempts: int = 3):
+        """Make sure the active plan can run; if not, install one over the live nodes.
+
+        Called after a node loss and after any replan, because a switch that fails half way
+        (a node dies while staging, a paused switch cannot restage) leaves admission paused.
+        It waits for a replan in progress instead of being dropped by it. If the live nodes
+        cannot hold the model, queued requests fail with an error instead of waiting forever.
+        """
+        if self.active_version is None:
+            return  # nothing has been installed yet: a node lost while joining is bootstrap's business
+        self._begin_replan(wait=True)
+        try:
+            error: Exception = RuntimeError("could not install a plan")
+            for _ in range(attempts):
+                with self.cv:
+                    if self._servable():
+                        self.admission_paused = False
+                        self.cv.notify_all()
+                        return
+                    self.admission_paused = True
+                self.event("replan_trigger", reason=reason, scale=dict(self.scale))
+                try:
+                    self.install_plan(self.compute_plan(self.policy))
+                except InfeasibleError as e:
+                    error = e
+                    break
+                except Exception as e:
+                    log.exception("recovery replan failed")
+                    error = e
+            else:
+                if self._servable():
+                    return
+            self.event("replan_infeasible", error=str(error))
+            self._fail_all(f"the live nodes cannot hold the model: {error}")
+        finally:
+            self._end_replan()
+
+    def _fail_all(self, msg: str):
+        with self.cv:
+            reqs = list(self.waiting) + list(self.active.values())
+            for r in self.active.values():
+                self.pending_free.setdefault(r.version, []).append(r.kv)
+            self.waiting.clear()
+            self.active.clear()
+            self.inflight_mbs.clear()
+            self.unservable = msg
+            self.cv.notify_all()
+        for r in reqs:
+            r.finish_reason = "error"
+            r.future.set_exception(RuntimeError(msg))
 
     def _choose_plan(self, cur: Plan) -> Optional[Plan]:
         """Choose between keeping the current plan, a zero-pause staged plan and an unconstrained
@@ -612,7 +694,7 @@ class Coordinator:
                 if r.version in hit:
                     self.pending_free.setdefault(r.version, []).append(r.kv)
                     del self.active[r.rid]
-                    r.cached, r.inflight, r.version = 0, False, None
+                    r.cached, r.inflight, r.version, r.migrate_to = 0, False, None, None
                     r.restarts += 1
                     self.waiting.appendleft(r)
             for mb, rec in list(self.inflight_mbs.items()):
@@ -620,62 +702,80 @@ class Coordinator:
                     del self.inflight_mbs[mb]
             if self.active_version in hit:
                 self.admission_paused = True
-            self.senders.pop(node_id, None)
-        if self.active_version in hit or not self.plans:
-            self.replan(f"node {node_id} lost", exclude={node_id})
+            dead = self.senders.pop(node_id, None)
+        if dead is not None:
+            dead.close()
+        self._ensure_servable(f"node {node_id} lost")
         for v in hit:
             if v != self.active_version:
                 self._release_version(v)
 
     # ================================================================ drift monitor (I3)
+    def _check_heartbeats(self):
+        """A suspended laptop or a dropped Wi-Fi link leaves the control socket open, so the
+        read never ends. Treat a node that has been silent for too long as lost."""
+        now = time.time()
+        for n in self.alive_nodes():
+            if now - n.last_seen > self.heartbeat_timeout_s:
+                self.event("heartbeat_timeout", node=n.node_id, silent_s=round(now - n.last_seen, 1))
+                n.last_seen = now  # report once
+                n.conn.shutdown()  # wakes the reader, which runs the node-loss path
+
     def _drift_loop(self):
         while self.running:
             time.sleep(1.0)
-            if not self.drift.enabled or self.active_version is None or self.replanning:
+            try:
+                self._check_heartbeats()
+                self._drift_step()
+            except Exception:  # must not kill the monitor thread
+                log.exception("drift monitor")
+
+    def _drift_step(self):
+        if not self.drift.enabled or self.active_version is None or self.replanning:
+            return
+        now = time.time()
+        if now - self.last_switch < self.drift.settle_s:
+            for nd in list(self.nodes.values()):
+                nd.over_since = nd.under_since = None
+            return
+        plan = self.plans.get(self.active_version)
+        if plan is None:
+            return
+        trigger = None
+        for s in plan.stages:
+            n = self.nodes.get(s.node_id)
+            if n is None or not n.alive or not n.stats or n.stats.get("ratio") is None:
                 continue
-            now = time.time()
-            if now - self.last_switch < self.drift.settle_s:
-                for nd in self.nodes.values():
-                    nd.over_since = nd.under_since = None
+            ratio = n.stats["ratio"]
+            if n.baseline is None:
+                if n.calib_t0 is None:
+                    n.calib_t0 = now
+                n.calib.append(ratio)
+                if now - n.calib_t0 >= self.drift.calib_s:
+                    n.baseline = statistics.median(n.calib)
+                    self.event("drift_baseline", node=n.node_id, baseline=round(n.baseline, 3))
                 continue
-            plan = self.plans.get(self.active_version)
-            if plan is None:
-                continue
-            trigger = None
-            for s in plan.stages:
-                n = self.nodes.get(s.node_id)
-                if n is None or not n.alive or not n.stats or n.stats.get("ratio") is None:
-                    continue
-                ratio = n.stats["ratio"]
-                if n.baseline is None:
-                    if n.calib_t0 is None:
-                        n.calib_t0 = now
-                    n.calib.append(ratio)
-                    if now - n.calib_t0 >= self.drift.calib_s:
-                        n.baseline = statistics.median(n.calib)
-                        self.event("drift_baseline", node=n.node_id, baseline=round(n.baseline, 3))
-                    continue
-                drift = ratio / n.baseline
-                cur = self.scale.get(n.node_id, 1.0)
-                rel = drift / cur
-                self.drift_log.append({"t": now - self.t_start, "node": n.node_id, "ratio": ratio,
-                                       "drift": drift, "scale": cur})
-                if rel > 1 + self.drift.threshold:
-                    n.over_since = n.over_since or now
-                    n.under_since = None
-                elif cur > 1.0 and drift < 1 + self.drift.threshold:  # back near its baseline: recovered
-                    n.under_since = n.under_since or now
-                    n.over_since = None
-                else:
-                    n.over_since = n.under_since = None
-                since = n.over_since or n.under_since
-                if since and now - since >= self.drift.sustain_s and now - self.last_replan >= self.drift.cooldown_s:
-                    trigger = (n, drift)
-            if trigger:
-                n, drift = trigger
-                self.scale[n.node_id] = round(max(1.0, drift), 3)
+            drift = ratio / n.baseline
+            cur = self.scale.get(n.node_id, 1.0)
+            rel = drift / cur
+            self.drift_log.append({"t": now - self.t_start, "node": n.node_id, "ratio": ratio,
+                                   "drift": drift, "scale": cur})
+            if rel > 1 + self.drift.threshold:
+                n.over_since = n.over_since or now
+                n.under_since = None
+            elif cur > 1.0 and drift < 1 + self.drift.threshold:  # back near its baseline: recovered
+                n.under_since = n.under_since or now
+                n.over_since = None
+            else:
                 n.over_since = n.under_since = None
-                threading.Thread(target=self.replan, args=(f"drift {n.node_id} x{drift:.2f}",), daemon=True).start()
+            since = n.over_since or n.under_since
+            if since and now - since >= self.drift.sustain_s and now - self.last_replan >= self.drift.cooldown_s:
+                trigger = (n, drift)
+        if trigger:
+            n, drift = trigger
+            self.scale[n.node_id] = round(max(1.0, drift), 3)
+            n.over_since = n.under_since = None
+            threading.Thread(target=self.replan, args=(f"drift {n.node_id} x{drift:.2f}",), daemon=True).start()
 
     # ================================================================ requests
     def submit(self, prompt: List[int], max_new: int = 128, temperature: float = 0.0, top_p: float = 1.0,
@@ -683,6 +783,8 @@ class Coordinator:
                on_token: Optional[Callable[[int], None]] = None, stop_ids: Optional[List[int]] = None) -> Request:
         if len(prompt) == 0:
             raise ValueError("empty prompt")
+        if self.unservable:
+            raise RuntimeError(self.unservable)
         with self.cv:
             r = Request(self.next_rid, list(prompt), max_new, temperature, top_p, top_k, seed, ignore_eos,
                         stop_ids, on_token)

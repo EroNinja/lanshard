@@ -64,6 +64,7 @@ def local_cluster(model: str, workers: List[Dict], transport: str = "tcp", polic
                         sched=sched, drift=drift, netem=coord_netem, profile_budget_s=profile_budget,
                         **coord_kw).start()
     procs = [spawn_worker(coord.control_address, w, transport, log_dir, profile_budget) for w in workers]
+    coord.worker_procs = {w.get("node_id"): p for w, p in zip(workers, procs)}  # for fault injection
     try:
         if bootstrap:
             coord.bootstrap(len(workers), timeout=900)
