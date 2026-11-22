@@ -3,6 +3,7 @@
 Everything runs in FP32 on CPU with one request, so every plan must give exactly the tokens that
 stock ``transformers`` gives, including across mid-generation re-splits.
 """
+
 import signal
 import threading
 
@@ -25,8 +26,7 @@ def _workers(model, cap_layers, n=2):
     limit = OVERHEAD_GB + (cap_layers + 0.5) * per / (1 << 30)
     # FP32 on the wire: the default FP16 wire rounds FP32 activations at every hop, so the output
     # would depend on where the cuts are
-    return [{"node_id": f"w{i + 1}", "device": "cpu", "mem_limit_gb": limit, "wire_dtype": "float32"}
-            for i in range(n)]
+    return [{"node_id": f"w{i + 1}", "device": "cpu", "mem_limit_gb": limit, "wire_dtype": "float32"} for i in range(n)]
 
 
 def _cluster(model, workers, **kw):
@@ -34,8 +34,17 @@ def _cluster(model, workers, **kw):
     from lanshard.coordinator import DriftConfig, SchedulerConfig
 
     kw.setdefault("drift", DriftConfig(enabled=False))
-    return local_cluster(model, workers, sched=SchedulerConfig(kv_token_budget=KV_BUDGET), coord_netem=None,
-                         profile_budget=1, overhead_gb=OVERHEAD_GB, device="cpu", wire_dtype="float32", **kw)
+    return local_cluster(
+        model,
+        workers,
+        sched=SchedulerConfig(kv_token_budget=KV_BUDGET),
+        coord_netem=None,
+        profile_budget=1,
+        overhead_gb=OVERHEAD_GB,
+        device="cpu",
+        wire_dtype="float32",
+        **kw,
+    )
 
 
 def _submit_and_wait_for(c, n_tokens, max_new=MAX_NEW):
@@ -57,9 +66,14 @@ def reference(tiny_model):
     from transformers import AutoModelForCausalLM
 
     hf = AutoModelForCausalLM.from_pretrained(tiny_model, dtype=torch.float32).eval()
-    out = hf.generate(torch.tensor([PROMPT]), max_new_tokens=MAX_NEW, min_new_tokens=MAX_NEW, do_sample=False,
-                      attention_mask=torch.ones(1, len(PROMPT), dtype=torch.long))
-    return out[0, len(PROMPT):].tolist()
+    out = hf.generate(
+        torch.tensor([PROMPT]),
+        max_new_tokens=MAX_NEW,
+        min_new_tokens=MAX_NEW,
+        do_sample=False,
+        attention_mask=torch.ones(1, len(PROMPT), dtype=torch.long),
+    )
+    return out[0, len(PROMPT) :].tolist()
 
 
 def test_two_stage_chunked_prefill_matches_hf(tiny_model, reference):

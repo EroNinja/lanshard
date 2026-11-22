@@ -3,6 +3,7 @@
 The weights are random but the architecture is the real one (GQA attention, RoPE, RMSNorm, SwiGLU),
 so the stage runner, the loaders and the cluster are exercised exactly as with a real checkpoint.
 """
+
 import os
 
 import torch

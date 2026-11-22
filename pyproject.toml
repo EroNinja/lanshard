@@ -20,3 +20,6 @@ lanshard-cluster = "lanshard.cluster:main"
 
 [tool.setuptools]
 packages = ["lanshard"]
+
+[tool.ruff]
+line-length = 120
