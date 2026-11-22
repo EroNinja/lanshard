@@ -3,13 +3,17 @@
 Pipeline shape: coordinator -> stage 1 -> ... -> stage k -> coordinator.
 Stage cost for node n holding ``m`` layers with successor ``s``::
 
-    cost = m * t_layer(n) + hop(n -> s)
+    cost = max(m * t_layer(n), occupancy(n -> s))        "latency" (default)
+    cost = m * t_layer(n) + rtt(n -> s) / 2              "latency-additive" (the proposal's model)
 
 where ``t_layer`` is the profiled per-layer time for the planning micro-batch
-and ``hop`` is the measured one-way latency (RTT / 2) plus payload/bandwidth.
+and ``occupancy`` is payload / measured bandwidth of that link. With several
+micro-batches in flight a hop's latency overlaps other stages' compute, so it
+does not limit throughput; it counts toward single-stream latency instead.
 Decode throughput of a full pipeline is set by its slowest stage, so we
-minimise the maximum stage cost (ties broken by total latency), subject to each
-node's memory: ``m * mem_layer + m * kv_bytes_per_layer + overhead <= mem_free``.
+minimise the maximum stage cost, then the total latency among the plans that
+reach it, subject to each node's memory:
+``m * mem_layer + m * kv_bytes_per_layer + overhead <= mem_free``.
 
 For a fixed node order the exact DP is O(L^2 N). With N <= 5 we also search
 every ordered subset of nodes (<= 325 orders), so a node on a bad link is moved

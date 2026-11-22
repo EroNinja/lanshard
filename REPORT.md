@@ -7,8 +7,9 @@ CSE 598 Final Report, Fall 2026. Team 20: Omer Kuyucu (lead), Ashwanth Balakrish
 > repartitioning, continuous batching, and three swappable transports. All experiments ran on one laptop
 > with emulated heterogeneity (CPU worker, slowed GPU worker, memory caps, Wi-Fi delay emulation).
 >
-> * **RQ1:** partitioning by measured layer time beats memory-proportional partitioning by **+12-21%
->   throughput** on heterogeneous devices, with a lower bubble ratio and equal or better p99 TPOT. The
+> * **RQ1:** partitioning by measured layer time beats memory-proportional partitioning by **+9% and
+>   +16% throughput** on heterogeneous devices in the two same-workload back-to-back pairs, with a lower
+>   bubble ratio and equal or better p99 TPOT. The
 >   proposal's "compute + RTT" stage cost was wrong for throughput: it starved a bad-link node for no gain.
 >   Hop latency overlaps with pipelining, and the fixed model treats it as a tie-breaker.
 > * **RQ2:** pure drain-then-switch, as proposed, *lost* 12% of tokens after a throttle, because the old
@@ -37,7 +38,7 @@ out to test three claims from our proposal:
 
 ## 2. System
 
-LANShard is about 2,000 lines of Python on PyTorch and Hugging Face Transformers (`lanshard/`).
+LANShard is about 3,100 lines of Python on PyTorch and Hugging Face Transformers (`lanshard/`).
 
 ```
             ┌──────────── coordinator ─────────────┐
@@ -75,7 +76,8 @@ is the planning micro-batch. The planner minimises the maximum stage cost (ties 
 contiguous ranges, subject to
 `m·(mem_layer + kv_reserve_per_layer) + overhead ≤ mem_free`. The DP is exact and O(L²N) per order. With
 N ≤ 5 we also enumerate every ordered subset (≤ 325 orders), so a slow-link node is placed last or dropped.
-Planning takes 3-50 ms in Python. A test checks it against brute force over all orders and splits.
+Planning takes 3-50 ms in Python for three nodes (about 1 s for five). A test checks it against brute
+force over all orders and splits.
 
 **I3, drift-triggered drain-then-switch** (`coordinator._drift_loop`, `install_plan`). Workers report a 10 s
 rolling median of *observed / profiled* stage time on decode micro-batches. The coordinator calibrates a
@@ -200,10 +202,13 @@ three hours of back-to-back runs. The *plans* are still the same shape (fast GPU
 * **The planner does what C1 says it should.** B2 gives the 2×-slower GPU as many layers as the fast one
   because their memory is similar. Our planner moves 3-4 layers from the slow GPU to the fast one, which
   cuts the predicted bottleneck by ~40% (87-95 ms → 53-64 ms).
-* **Measured gain is real but smaller than predicted.** In back-to-back pairs, measured-time partitioning
-  wins every time: 30.6 vs 27.2, 29.7 vs 24.5, 27.6 vs 23.7 tok/s, i.e. **+12% to +21% throughput**
-  (median of pairs +16%). The mean bubble ratio falls from 0.40-0.45 to 0.32-0.39, and p99 TPOT is equal or
-  better in every pair.
+* **Measured gain is real but smaller than predicted.** Only two pairs ran the same workload (same seed)
+  minutes apart: 29.7 vs 27.2 tok/s (13:26 vs 13:19, seed 1, **+9%**) and 27.6 vs 23.7 tok/s (15:45 vs
+  15:38, seed 0, **+16%**). In both, measured-time partitioning ran second, on the hotter GPU. The mean
+  bubble ratio falls from 0.40-0.45 to 0.32-0.39, and p99 TPOT is equal or better in both pairs.
+  (Correction: an earlier version of this bullet reported "+12% to +21%" from 30.6 vs 27.2 and 29.7 vs
+  24.5. Those pairs used different seeds, so they compared different requests; rows 13:14, 13:19, 13:26
+  and 13:30 are seeds 0, 1, 1 and 2. For the final `latency` policy there is one valid pair.)
 * **Why not +65%:** our emulation of the slow GPU waits *after* its forward, which leaves the shared physical
   GPU free for the fast worker. Giving the "slow GPU" extra layers in B2 is therefore cheaper here than it
   would be on a real separate slow laptop. Pipeline depth (≤ 12 micro-batches) and the coordinator's
@@ -248,7 +253,9 @@ The variants differ only in how I3 reacts:
 | drift on + migration, staged plans only | 20.3 | 15.0 | 74% | 4422 (+3%) | 0.2 s | 819 ms |
 | **drift on + migration + cost-aware choice (final)** | 21.8 | **15.9** | 73% | **4426 (+3%)** | 0.7 s | 971 ms |
 
-(Run-to-run noise in the "before" column is ±2 tok/s; compare *retained* and the post-throttle columns.)
+(Run-to-run noise in the "before" column is ±2 tok/s; compare *retained* and the post-throttle columns.
+A second static run, `results/_rq2-repro-drift-off`, gave 25.4 before and 13.2 after the throttle, so
+the post-throttle baseline also varies by about 10% between runs.)
 
 * **Detection works.** Every drift-on run flagged gpu-fast 30-35 s after the throttle (the 30 s sustain
   window) with an estimated slowdown of 2.2-3.3×. The true value is 2.5×, plus contention from the shared GPU.
@@ -338,6 +345,25 @@ every affected experiment was re-run. The pre-fix runs are kept: `latency-additi
    happens only if the planner predicts a ≥ 10% lower bottleneck *under the measured slowdown*
    (`replan_skipped` events record the ones it declines).
 
+### 5.1 Code changes made after these measurements
+
+A later review (`docs/REVIEW.md`) changed code that the numbers above depend on. Nothing was re-measured,
+so sections 4.1 to 4.3 describe the code as it was.
+
+* **Emulated bandwidth.** In all runs above the netem rate only delayed each message, and any number of
+  messages could be in flight on one link. A link now sends one message at a time. This matters for the
+  serving runs (RQ1 and RQ2), and most for `badlink3`: the old emulator could not make a link the
+  throughput bottleneck, and a prefill chunk did not hold back the decode tokens behind it. RQ3 is not
+  affected, because its ping-pong has one message in flight per link (re-run before and after on a CPU
+  machine: same numbers within noise).
+* **Link occupancy in the planner.** Item 2 above describes the stage cost as
+  `max(compute, link occupancy)`. During these runs the planner was never given a payload size or a
+  bandwidth, so the occupancy term was zero. Bandwidth is now measured per link at join and used.
+* **Tie-break.** Among plans with the same bottleneck the planner now returns the one with the lowest
+  total latency exactly. Plans can differ from the ones listed in 4.2 where several tie.
+* **Failure handling.** Silent nodes are dropped after 15 s without a report, and requests fail with an
+  error when the surviving nodes cannot hold the model.
+
 **An intermittent stall we did not root-cause.** In 2 of ~16 early runs, 2-3 micro-batches stopped
 mid-pipeline with no error anywhere. Once it lasted 38 minutes and then resumed; once it lasted until the end
 of the run. Per-node counters showed messages stuck between specific hops. We hardened the obvious suspects:
@@ -366,8 +392,10 @@ The bug has not recurred in the 10 runs since. If it does, the logs will now sho
   partitioning policy, and the code is model-agnostic (any HF decoder with standard layer names), but
   8B-scale runs are untested.
 * **B3 (llama.cpp RPC) not run.** The harness exists, but we did not download and run third-party binaries.
-* **RTT is measured once at join.** Link quality changes are not re-measured during serving. Drift handling
-  covers compute only.
+* **RTT and bandwidth are measured once at join.** Link quality changes are not re-measured during
+  serving. Drift handling covers compute only.
+* **Saturated load only.** RQ1 offers 180-250 tok/s to a cluster that serves 22-31, so TTFT is queueing
+  time and TPOT follows from throughput. There is no measurement below saturation.
 
 ## 7. Future work
 

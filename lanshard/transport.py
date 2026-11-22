@@ -1,4 +1,4 @@
-"""Stage channels: ``send_hidden`` / ``recv_hidden`` over three backends.
+"""Stage channels: ``connect(...).send`` / ``serve(..., on_message)`` over three backends.
 
 Every backend moves the same thing, a small JSON header plus one tensor, and is
 one-way (A pushes to B). Pipelines and ping-pong benchmarks are built from pairs

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Re-runs the experiments affected by the planner/drift fixes (see REPORT.md section 6).
+# Re-runs the experiments affected by the planner/drift fixes (see REPORT.md section 5).
 cd "$(dirname "$0")"
 COMMON="--model Qwen/Qwen2.5-1.5B-Instruct --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift"
 echo ">> serve hetero3 memory r0"; python serve.py --preset hetero3 --policy memory --repeat 0 --seed 0 $COMMON
