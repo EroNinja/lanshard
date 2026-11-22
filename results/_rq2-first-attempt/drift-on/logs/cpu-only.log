@@ -1,0 +1,11 @@
+2026-11-21 14:36:30,390 [cpu-only] INFO joined 127.0.0.1:50479 as cpu-only (CPU, cpu)
+2026-11-21 14:36:30,564 [cpu-only] INFO profiling one layer of Qwen/Qwen2.5-1.5B-Instruct for 8s
+2026-11-21 14:37:19,782 [cpu-only] INFO plan v1 ready: layers 23-27 (loaded 5 in 0.6s)
+2026-11-21 14:39:17,708 [cpu-only] INFO plan v2 ready: layers 22-27 (loaded 1 in 0.2s)
+2026-11-21 14:41:07,968 [cpu-only] INFO released v1; holding 6 layers
+2026-11-21 14:41:07,970 [cpu-only] INFO plan v2 ready: layers 22-27 (loaded 0 in 0.0s)
+2026-11-21 14:41:39,594 [cpu-only] INFO plan v3 ready: layers 22-27 (loaded 0 in 0.0s)
+2026-11-21 14:43:11,410 [cpu-only] INFO released v2; holding 6 layers
+2026-11-21 14:43:11,412 [cpu-only] INFO plan v3 ready: layers 22-27 (loaded 0 in 0.0s)
+2026-11-21 14:43:42,670 [cpu-only] INFO plan v4 ready: layers 22-27 (loaded 0 in 0.0s)
+2026-11-21 14:44:54,818 [cpu-only] INFO released v3; holding 6 layers

@@ -1,0 +1,596 @@
+{
+ "status": {
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "transport": "tcp",
+  "policy": "memory",
+  "active_version": 1,
+  "plan": {
+   "version": 1,
+   "policy": "memory",
+   "stages": [
+    {
+     "node_id": "cpu-only",
+     "start": 0,
+     "end": 6,
+     "cost_ms": 58.81230000856519
+    },
+    {
+     "node_id": "gpu-slow",
+     "start": 6,
+     "end": 17,
+     "cost_ms": 94.6947999642752
+    },
+    {
+     "node_id": "gpu-fast",
+     "start": 17,
+     "end": 28,
+     "cost_ms": 38.37350017157569
+    }
+   ],
+   "bottleneck_ms": 94.6947999642752,
+   "latency_ms": 195.42090015185997,
+   "num_layers": 28,
+   "plan_time_ms": 0.20820001373067498,
+   "meta": {
+    "scale": {},
+    "specs": [
+     {
+      "node_id": "cpu-only",
+      "t_layer_ms": 9.142800001427531,
+      "mem_free": 1717986918,
+      "mem_layer": 187191296,
+      "kv_bytes_per_layer": 33554432,
+      "overhead": 322122547
+     },
+     {
+      "node_id": "gpu-slow",
+      "t_layer_ms": 8.247799996752292,
+      "mem_free": 1610612736,
+      "mem_layer": 93595648,
+      "kv_bytes_per_layer": 16777216,
+      "overhead": 322122547
+     },
+     {
+      "node_id": "gpu-fast",
+      "t_layer_ms": 3.0980000155977905,
+      "mem_free": 2147483648,
+      "mem_layer": 93595648,
+      "kv_bytes_per_layer": 16777216,
+      "overhead": 322122547
+     }
+    ]
+   }
+  },
+  "waiting": 0,
+  "active": 0,
+  "inflight_mbs": 0,
+  "nodes": {
+   "cpu-only": {
+    "alive": true,
+    "accel": "CPU",
+    "os": "Windows 10",
+    "mem_free_gb": 1.6,
+    "profile": {
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "dtype": "float32",
+     "context": 512,
+     "t_decode_ms": {
+      "1": 6.863999995402992,
+      "2": 8.45999998273328,
+      "4": 9.142800001427531,
+      "8": 11.20690000243485
+     },
+     "t_prefill_ms_per_tok": 0.5433410156001628,
+     "mem_layer": 187191296,
+     "kv_per_tok_layer": 2048,
+     "num_layers": 28,
+     "slowdown": 1.5
+    },
+    "rtt": {
+     "gpu-slow": 7.910999993328005,
+     "gpu-fast": 7.371899962890893,
+     "coordinator": 6.4218000043183565
+    },
+    "baseline": null,
+    "scale": 1.0,
+    "stats": {
+     "node_id": "cpu-only",
+     "t": 1795301123.1627214,
+     "ratio": 1.152022630286042,
+     "n_ratio": 71,
+     "busy_s": 167.40901080012554,
+     "wall_s": 282.07735520001734,
+     "msgs": 1139,
+     "recv": 1906,
+     "inbox": 0,
+     "last_mb": 1906,
+     "links": {
+      "gpu-slow": {
+       "enq": 1906,
+       "sent": 1906,
+       "pending": 0
+      }
+     },
+     "slowdown": 1.5,
+     "layers": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "kv_reqs": 0,
+     "mem": {
+      "rss": 2045153280,
+      "kv": 0
+     }
+    }
+   },
+   "gpu-slow": {
+    "alive": true,
+    "accel": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "os": "Windows 10",
+    "mem_free_gb": 1.5,
+    "profile": {
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "dtype": "float16",
+     "context": 512,
+     "t_decode_ms": {
+      "1": 4.961500002536923,
+      "2": 6.380900042131543,
+      "4": 8.247799996752292,
+      "8": 10.44230000115931
+     },
+     "t_prefill_ms_per_tok": 0.02304296867805533,
+     "mem_layer": 93595648,
+     "kv_per_tok_layer": 1024,
+     "num_layers": 28,
+     "slowdown": 2.0
+    },
+    "rtt": {
+     "cpu-only": 6.84789998922497,
+     "gpu-fast": 7.93829996837303,
+     "coordinator": 5.732999998144805
+    },
+    "baseline": null,
+    "scale": 1.0,
+    "stats": {
+     "node_id": "gpu-slow",
+     "t": 1795301123.602735,
+     "ratio": 1.0932067825027825,
+     "n_ratio": 68,
+     "busy_s": 230.83326610072982,
+     "wall_s": 282.51732519996585,
+     "msgs": 1139,
+     "recv": 1906,
+     "inbox": 0,
+     "last_mb": 1906,
+     "links": {
+      "gpu-fast": {
+       "enq": 1906,
+       "sent": 1906,
+       "pending": 0
+      }
+     },
+     "slowdown": 2.0,
+     "layers": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+     ],
+     "kv_reqs": 0,
+     "mem": {
+      "rss": 1619005440,
+      "peak_alloc": 1308876800,
+      "alloc": 1038072832,
+      "kv": 0
+     }
+    }
+   },
+   "gpu-fast": {
+    "alive": true,
+    "accel": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "os": "Windows 10",
+    "mem_free_gb": 2.0,
+    "profile": {
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "dtype": "float16",
+     "context": 512,
+     "t_decode_ms": {
+      "1": 1.7930999747477472,
+      "2": 2.2782000014558434,
+      "4": 3.0980000155977905,
+      "8": 4.992700007278472
+     },
+     "t_prefill_ms_per_tok": 0.009322265668743057,
+     "mem_layer": 93595648,
+     "kv_per_tok_layer": 1024,
+     "num_layers": 28,
+     "slowdown": 1.0
+    },
+    "rtt": {
+     "cpu-only": 6.703399994876236,
+     "gpu-slow": 7.7883999911136925,
+     "coordinator": 8.590899989940226
+    },
+    "baseline": null,
+    "scale": 1.0,
+    "stats": {
+     "node_id": "gpu-fast",
+     "t": 1795301123.605256,
+     "ratio": 1.468107562916729,
+     "n_ratio": 68,
+     "busy_s": 106.36137060186593,
+     "wall_s": 282.5197455000016,
+     "msgs": 1139,
+     "recv": 1906,
+     "inbox": 0,
+     "last_mb": 1906,
+     "links": {
+      "coordinator": {
+       "enq": 1906,
+       "sent": 1906,
+       "pending": 0
+      }
+     },
+     "slowdown": 1.0,
+     "layers": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+     ],
+     "kv_reqs": 0,
+     "mem": {
+      "rss": 1620852736,
+      "peak_alloc": 1308876800,
+      "alloc": 1038072832,
+      "kv": 0
+     }
+    }
+   }
+  },
+  "loop_ms_ewma": 154.68985925763005,
+  "stage_ms_ewma": 56.81256912953322
+ },
+ "events": [
+  {
+   "t": 5.082136392593384,
+   "event": "join",
+   "node": "cpu-only",
+   "accel": "CPU",
+   "mem_free_gb": 1.6
+  },
+  {
+   "t": 5.248313903808594,
+   "event": "join",
+   "node": "gpu-slow",
+   "accel": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "mem_free_gb": 1.5
+  },
+  {
+   "t": 5.2518227100372314,
+   "event": "join",
+   "node": "gpu-fast",
+   "accel": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "mem_free_gb": 2.0
+  },
+  {
+   "t": 22.29218363761902,
+   "event": "profiled",
+   "node": "cpu-only",
+   "t_decode_ms": {
+    "1": 6.863999995402992,
+    "2": 8.45999998273328,
+    "4": 9.142800001427531,
+    "8": 11.20690000243485
+   },
+   "t_prefill_ms_per_tok": 0.5433,
+   "mem_layer_mb": 178.5
+  },
+  {
+   "t": 38.34525752067566,
+   "event": "profiled",
+   "node": "gpu-slow",
+   "t_decode_ms": {
+    "1": 4.961500002536923,
+    "2": 6.380900042131543,
+    "4": 8.247799996752292,
+    "8": 10.44230000115931
+   },
+   "t_prefill_ms_per_tok": 0.023,
+   "mem_layer_mb": 89.3
+  },
+  {
+   "t": 53.88369679450989,
+   "event": "profiled",
+   "node": "gpu-fast",
+   "t_decode_ms": {
+    "1": 1.7930999747477472,
+    "2": 2.2782000014558434,
+    "4": 3.0980000155977905,
+    "8": 4.992700007278472
+   },
+   "t_prefill_ms_per_tok": 0.0093,
+   "mem_layer_mb": 89.3
+  },
+  {
+   "t": 54.49165439605713,
+   "event": "rtt",
+   "matrix": {
+    "coordinator": {
+     "cpu-only": 7.08060001488775,
+     "gpu-slow": 7.977099972777069,
+     "gpu-fast": 7.441900030244142
+    },
+    "cpu-only": {
+     "gpu-slow": 7.911,
+     "gpu-fast": 7.372,
+     "coordinator": 6.422
+    },
+    "gpu-slow": {
+     "cpu-only": 6.848,
+     "gpu-fast": 7.938,
+     "coordinator": 5.733
+    },
+    "gpu-fast": {
+     "cpu-only": 6.703,
+     "gpu-slow": 7.788,
+     "coordinator": 8.591
+    }
+   }
+  },
+  {
+   "t": 55.60571026802063,
+   "event": "node_ready",
+   "node": "cpu-only",
+   "version": 1,
+   "loaded": 6,
+   "load_s": 1.11
+  },
+  {
+   "t": 55.89552545547485,
+   "event": "node_ready",
+   "node": "gpu-fast",
+   "version": 1,
+   "loaded": 11,
+   "load_s": 1.4
+  },
+  {
+   "t": 55.94006395339966,
+   "event": "node_ready",
+   "node": "gpu-slow",
+   "version": 1,
+   "loaded": 11,
+   "load_s": 1.44
+  },
+  {
+   "t": 55.94206714630127,
+   "event": "switch",
+   "version": 1,
+   "old": null,
+   "stage_s": 1.45,
+   "plan": "v1 memory: cpu-only[0:6]=58.8ms -> gpu-slow[6:17]=94.7ms -> gpu-fast[17:28]=38.4ms | bottleneck 94.7ms"
+  }
+ ],
+ "rtt": {
+  "coordinator": {
+   "cpu-only": 7.08060001488775,
+   "gpu-slow": 7.977099972777069,
+   "gpu-fast": 7.441900030244142
+  },
+  "cpu-only": {
+   "gpu-slow": 7.911,
+   "gpu-fast": 7.372,
+   "coordinator": 6.422
+  },
+  "gpu-slow": {
+   "cpu-only": 6.848,
+   "gpu-fast": 7.938,
+   "coordinator": 5.733
+  },
+  "gpu-fast": {
+   "cpu-only": 6.703,
+   "gpu-slow": 7.788,
+   "coordinator": 8.591
+  }
+ },
+ "plans": {
+  "1": {
+   "version": 1,
+   "policy": "memory",
+   "stages": [
+    {
+     "node_id": "cpu-only",
+     "start": 0,
+     "end": 6,
+     "cost_ms": 58.81230000856519
+    },
+    {
+     "node_id": "gpu-slow",
+     "start": 6,
+     "end": 17,
+     "cost_ms": 94.6947999642752
+    },
+    {
+     "node_id": "gpu-fast",
+     "start": 17,
+     "end": 28,
+     "cost_ms": 38.37350017157569
+    }
+   ],
+   "bottleneck_ms": 94.6947999642752,
+   "latency_ms": 195.42090015185997,
+   "num_layers": 28,
+   "plan_time_ms": 0.20820001373067498,
+   "meta": {
+    "scale": {},
+    "specs": [
+     {
+      "node_id": "cpu-only",
+      "t_layer_ms": 9.142800001427531,
+      "mem_free": 1717986918,
+      "mem_layer": 187191296,
+      "kv_bytes_per_layer": 33554432,
+      "overhead": 322122547
+     },
+     {
+      "node_id": "gpu-slow",
+      "t_layer_ms": 8.247799996752292,
+      "mem_free": 1610612736,
+      "mem_layer": 93595648,
+      "kv_bytes_per_layer": 16777216,
+      "overhead": 322122547
+     },
+     {
+      "node_id": "gpu-fast",
+      "t_layer_ms": 3.0980000155977905,
+      "mem_free": 2147483648,
+      "mem_layer": 93595648,
+      "kv_bytes_per_layer": 16777216,
+      "overhead": 322122547
+     }
+    ]
+   }
+  }
+ },
+ "sched": {
+  "max_decode_mb": 16,
+  "prefill_chunk": 512,
+  "max_prefill_inflight": 1,
+  "depth": null,
+  "max_depth": 12,
+  "kv_token_budget": 16384,
+  "max_active": 64,
+  "planning_batch": 4
+ },
+ "drift": {
+  "enabled": false,
+  "threshold": 0.25,
+  "sustain_s": 30.0,
+  "calib_s": 15.0,
+  "cooldown_s": 30.0,
+  "settle_s": 20.0,
+  "min_gain": 0.1
+ },
+ "summary": {
+  "n_requests": 40,
+  "wall_s": 280.2131562232971,
+  "gen_tokens": 6635,
+  "throughput_tok_s": 23.678402860973026,
+  "per_request_tok_s": 0.9419296822317986,
+  "ttft_ms": {
+   "p50": 11284.254312515259,
+   "p95": 66729.42006587978,
+   "p99": 91092.37976789474
+  },
+  "tpot_ms": {
+   "p50": 951.5795229393759,
+   "p95": 1213.5349523138116,
+   "p99": 1292.8829931177274
+  },
+  "itl_ms": {
+   "p50": 813.506,
+   "p95": 2112.7357999999986,
+   "p99": 2651.033
+  },
+  "decode_mb": {
+   "n": 1108,
+   "mean_size": 5.95216606498195,
+   "loop_ms_p50": 677.5486499827821,
+   "compute_ms_p50": 419.65,
+   "network_ms_p50": 18.940250038042684,
+   "deser_ms_p50": 0.343849980764091,
+   "queue_ms_p50": 212.692
+  },
+  "nodes": {
+   "cpu-only": {
+    "busy_frac": 0.5934861757386304,
+    "bubble_ratio": 0.4065138242613696,
+    "peak_alloc_gb": 0.0,
+    "rss_gb": 1.9046974182128906,
+    "n_layers": 6
+   },
+   "gpu-slow": {
+    "busy_frac": 0.8170587978537103,
+    "bubble_ratio": 0.18294120214628973,
+    "peak_alloc_gb": 1.2189865112304688,
+    "rss_gb": 1.5078163146972656,
+    "n_layers": 11
+   },
+   "gpu-fast": {
+    "busy_frac": 0.37647411303457134,
+    "bubble_ratio": 0.6235258869654287,
+    "peak_alloc_gb": 1.2189865112304688,
+    "rss_gb": 1.5095367431640625,
+    "n_layers": 11
+   }
+  },
+  "plan": "v1 memory: cpu-only[0:6]=58.8ms -> gpu-slow[6:17]=94.7ms -> gpu-fast[17:28]=38.4ms | bottleneck 94.7ms",
+  "mean_bubble_ratio": 0.40432697112436267,
+  "config": {
+   "model": "Qwen/Qwen2.5-1.5B-Instruct",
+   "preset": "hetero3",
+   "worker": [],
+   "policy": "memory",
+   "transport": "tcp",
+   "no_drift": true,
+   "coord_netem": "wifi",
+   "rate": 1.5,
+   "n": 40,
+   "warmup": 4,
+   "seed": 0,
+   "sharegpt": null,
+   "min_prompt": 100,
+   "max_prompt": 1000,
+   "prompt_median": 300.0,
+   "min_out": 50,
+   "max_out": 300,
+   "out_median": 120.0,
+   "kv_budget": 16384,
+   "prefill_chunk": 512,
+   "max_decode_mb": 16,
+   "depth": null,
+   "profile_budget": 8.0,
+   "overhead_gb": 0.3,
+   "repeat": 0,
+   "out": null
+  },
+  "workers": [
+   {
+    "node_id": "gpu-fast",
+    "mem_limit_gb": 2.0,
+    "netem": "wifi"
+   },
+   {
+    "node_id": "gpu-slow",
+    "slowdown": 2.0,
+    "mem_limit_gb": 1.5,
+    "netem": "wifi"
+   },
+   {
+    "node_id": "cpu-only",
+    "device": "cpu",
+    "slowdown": 1.5,
+    "mem_limit_gb": 1.6,
+    "netem": "wifi"
+   }
+  ]
+ }
+}

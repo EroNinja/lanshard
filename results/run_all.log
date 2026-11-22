@@ -1,0 +1,907 @@
+>> rq3_transport.py --iters 300
+[tcp] pinging 127.0.0.1:58028
+[grpc] pinging 127.0.0.1:58042
+[gloo] pinging 127.0.0.1:58063
+[W1121 13:11:00.000000000 socket.cpp:764] [c10d] The client socket has failed to connect to [kubernetes.docker.internal]:58066 (system error: 10049 - The requested address is not valid in its context.).
+[W1121 13:11:00.000000000 socket.cpp:764] [c10d] The client socket has failed to connect to [kubernetes.docker.internal]:58079 (system error: 10049 - The requested address is not valid in its context.).
+backend     bytes  rtt p50      p99     ser   deser    xfer  +vs tcp
+gloo        8192    0.423    0.719   0.075   0.026   0.110    0.154
+grpc        8192    0.319    0.444   0.038   0.028   0.094    0.102
+tcp         8192    0.115    0.208   0.020   0.011   0.027    0.000
+gloo       16384    0.454    0.752   0.082   0.026   0.119    0.167
+grpc       16384    0.389    0.599   0.052   0.035   0.107    0.135
+tcp        16384    0.119    0.235   0.021   0.011   0.028    0.000
+gloo       65536    0.744    1.394   0.138   0.043   0.190    0.299
+grpc       65536    0.580    0.821   0.073   0.044   0.173    0.217
+tcp        65536    0.146    0.242   0.022   0.012   0.039    0.000
+gloo     1048576    2.765    5.984   0.174   0.680   0.528    0.755
+grpc     1048576    8.335   37.886   1.139   0.952   2.077    3.539
+tcp      1048576    1.256    8.093   0.037   0.022   0.569    0.000
+gloo     4194304    7.745   29.832   0.281   1.998   1.593    1.806
+grpc     4194304   26.381   54.447   3.745   2.946   6.499   11.124
+tcp      4194304    4.133   17.565   0.046   0.027   1.993    0.000
+gloo    16777216   35.189   72.521   0.947   8.564   8.084    9.384
+grpc    16777216  115.026  140.273  14.341  11.337  31.835   49.302
+tcp     16777216   16.421   28.451   0.065   0.049   8.097    0.000
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-131103-rq3-transport
+>> rq3_transport.py --netem wifi --iters 200 --iters-large 15
+[tcp] pinging 127.0.0.1:58106
+[grpc] pinging 127.0.0.1:58135
+[gloo] pinging 127.0.0.1:58168
+[W1121 13:12:06.000000000 socket.cpp:764] [c10d] The client socket has failed to connect to [kubernetes.docker.internal]:58171 (system error: 10049 - The requested address is not valid in its context.).
+[W1121 13:12:06.000000000 socket.cpp:764] [c10d] The client socket has failed to connect to [kubernetes.docker.internal]:58184 (system error: 10049 - The requested address is not valid in its context.).
+backend     bytes  rtt p50      p99     ser   deser    xfer  +vs tcp
+gloo        8192    7.595   37.469   0.000   0.036   3.762   -0.140
+grpc        8192    7.495   43.411   0.000   0.048   3.699   -0.190
+tcp         8192    7.875   37.454   0.000   0.021   3.917    0.000
+gloo       16384    8.463   17.190   0.000   0.044   4.187    0.169
+grpc       16384    8.838   40.084   0.000   0.077   4.342    0.356
+tcp        16384    8.125   39.259   0.000   0.023   4.039    0.000
+gloo       65536   10.592   40.566   0.000   0.069   5.227    0.343
+grpc       65536   11.130   41.927   0.000   0.107   5.458    0.612
+tcp        65536    9.906   42.421   0.000   0.037   4.916    0.000
+gloo     1048576   53.841   55.632   0.000   0.739  26.181   -0.049
+grpc     1048576   61.252   79.296   0.000   0.998  29.628    3.656
+tcp      1048576   53.939   97.217   0.000   0.081  26.888    0.000
+gloo     4194304  188.102  211.991   0.000   2.288  91.763    1.378
+grpc     4194304  207.606  222.652   0.000   2.909 100.894   11.130
+tcp      4194304  185.346  196.848   0.000   0.071  92.602    0.000
+gloo    16777216  717.991  732.281   0.000   8.052 350.944    7.862
+grpc    16777216  793.850  824.742   0.000  11.146 385.779   45.792
+tcp     16777216  702.267  705.746   0.000   0.059 351.074    0.000
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-131232-rq3-transport-wifi
+>> b1_single.py --model Qwen/Qwen2.5-1.5B-Instruct --n 10 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:   0%|          | 1/338 [00:00<02:52,  1.95it/s]Loading weights:  36%|###6      | 123/338 [00:00<00:00, 252.77it/s]Loading weights:  53%|#####3    | 180/338 [00:00<00:00, 250.32it/s]Loading weights:  66%|######5   | 223/338 [00:01<00:00, 239.13it/s]Loading weights:  76%|#######6  | 257/338 [00:01<00:00, 228.22it/s]Loading weights:  85%|########4 | 286/338 [00:01<00:00, 240.06it/s]Loading weights:  93%|#########3| 315/338 [00:01<00:00, 245.60it/s]Loading weights: 100%|##########| 338/338 [00:01<00:00, 224.05it/s]
+{
+ "system": "B1-hf-single",
+ "model": "Qwen/Qwen2.5-1.5B-Instruct",
+ "n": 10,
+ "wall_s": 38.13156843185425,
+ "gen_tokens": 1055,
+ "throughput_tok_s": 27.66736442759792,
+ "tpot_ms": {
+  "p50": 36.201353312228434,
+  "p95": 40.62552798878063,
+  "p99": 41.10735962607644
+ },
+ "ttft_ms": {
+  "p50": 62.24524974822998,
+  "p99": 164.09802913665771
+ },
+ "peak_alloc_gb": 3.0153889656066895,
+ "config": {
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "n": 10,
+  "seed": 0,
+  "max_prompt": 1000,
+  "prompt_median": 300.0,
+  "max_out": 300,
+  "out_median": 120.0,
+  "device": "cuda"
+ }
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-131324-b1-single
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset hetero3 --policy memory --repeat 0 --seed 0 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 13:13:34,472 [coord] INFO coordinator up: control 127.0.0.1:58288, data 127.0.0.1:58286 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 13:13:37,257 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 13:13:37,404 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 13:13:37,409 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 13:13:53,056 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 5.628100014291704, '2': 7.442500034812838, '4': 8.008400036487728, '8': 10.09850000264123}, 't_prefill_ms_per_tok': 0.5264, 'mem_layer_mb': 178.5}
+2026-11-21 13:14:07,627 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.6232000198215246, '2': 2.036500023677945, '4': 2.7785999700427055, '8': 4.281100002117455}, 't_prefill_ms_per_tok': 0.0084, 'mem_layer_mb': 89.3}
+2026-11-21 13:14:22,177 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 3.8973999908193946, '2': 4.664800013415515, '4': 6.411199981812388, '8': 9.965500037651509}, 't_prefill_ms_per_tok': 0.0202, 'mem_layer_mb': 89.3}
+2026-11-21 13:14:22,759 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 6.7254999885335565, 'gpu-fast': 6.9834000314585865, 'gpu-slow': 7.95769999967888}, 'cpu-only': {'gpu-fast': 7.237, 'gpu-slow': 6.908, 'coordinator': 7.418}, 'gpu-fast': {'cpu-only': 7.283, 'gpu-slow': 5.956, 'coordinator': 7.753}, 'gpu-slow': {'cpu-only': 6.463, 'gpu-fast': 7.968, 'coordinator': 6.06}}}
+2026-11-21 13:14:22,761 [coord] INFO planned v1 memory: cpu-only[0:6]=51.7ms -> gpu-fast[6:20]=41.9ms -> gpu-slow[20:28]=54.3ms | bottleneck 54.3ms (2.02 ms to plan)
+2026-11-21 13:14:22,909 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 13:14:22,929 [coord] INFO event node_lost {'node': 'gpu-slow'}
+2026-11-21 13:14:22,948 [coord] INFO event node_lost {'node': 'gpu-fast'}
+Traceback (most recent call last):
+  File "D:\Faisal\Creations\Claude\lanshard\bench\serve.py", line 87, in <module>
+    run(parser().parse_args())
+  File "D:\Faisal\Creations\Claude\lanshard\bench\serve.py", line 30, in run
+    with local_cluster(args.model, workers, args.transport, args.policy, sched=sched, drift=drift,
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\contextlib.py", line 135, in __enter__
+    return next(self.gen)
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\cluster.py", line 68, in local_cluster
+    coord.bootstrap(len(workers), timeout=900)
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 316, in bootstrap
+    self.install_plan(plan, timeout)
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 385, in install_plan
+    n.conn.send({"type": "prepare", "plan": plan.to_dict(), "addrs": addrs, **self._prep_extra()})
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 528, in send
+    data = (json.dumps(obj, separators=(",", ":")) + "\n").encode()
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\json\encoder.py", line 199, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\json\encoder.py", line 257, in iterencode
+    return _iterencode(o, 0)
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\json\encoder.py", line 179, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type int64 is not JSON serializable
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset hetero3 --policy latency --repeat 0 --seed 0 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 13:14:32,881 [coord] INFO coordinator up: control 127.0.0.1:58334, data 127.0.0.1:58332 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 13:14:35,567 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 13:14:35,712 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 13:14:35,720 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 13:14:51,817 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 5.709499993827194, '2': 7.303799968212843, '4': 8.211600012145936, '8': 9.720099973492324}, 't_prefill_ms_per_tok': 0.5485, 'mem_layer_mb': 178.5}
+2026-11-21 13:15:06,252 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 3.6728999693877995, '2': 5.469300027471036, '4': 6.076800054870546, '8': 8.999600016977638}, 't_prefill_ms_per_tok': 0.0221, 'mem_layer_mb': 89.3}
+2026-11-21 13:15:20,591 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.7783999792300165, '2': 2.7280000504106283, '4': 3.47290001809597, '8': 5.2559999749064445}, 't_prefill_ms_per_tok': 0.0092, 'mem_layer_mb': 89.3}
+2026-11-21 13:15:21,162 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.111600018106401, 'gpu-slow': 7.227800029795617, 'gpu-fast': 8.39019997511059}, 'cpu-only': {'gpu-slow': 6.958, 'gpu-fast': 7.176, 'coordinator': 7.086}, 'gpu-slow': {'cpu-only': 7.166, 'gpu-fast': 8.242, 'coordinator': 7.409}, 'gpu-fast': {'cpu-only': 7.562, 'gpu-slow': 6.733, 'coordinator': 6.254}}}
+2026-11-21 13:15:21,166 [coord] INFO planned v1 latency: cpu-only[0:6]=52.7ms -> gpu-slow[6:14]=52.7ms -> gpu-fast[14:28]=51.7ms | bottleneck 52.7ms (3.95 ms to plan)
+2026-11-21 13:15:21,804 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 0.64}
+2026-11-21 13:15:21,972 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 8, 'load_s': 0.8}
+2026-11-21 13:15:22,334 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 14, 'load_s': 1.16}
+2026-11-21 13:15:22,336 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.17, 'plan': 'v1 latency: cpu-only[0:6]=52.7ms -> gpu-slow[6:14]=52.7ms -> gpu-fast[14:28]=51.7ms | bottleneck 52.7ms'}
+2026-11-21 13:19:48,862 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 13:19:48,931 [coord] INFO event node_lost {'node': 'gpu-fast'}
+2026-11-21 13:19:48,967 [coord] INFO event node_lost {'node': 'gpu-slow'}
+{
+ "throughput_tok_s": 30.554273218494497,
+ "tpot_ms": {
+  "p50": 710.4273433752527,
+  "p95": 883.7788849012679,
+  "p99": 987.5951551341554
+ },
+ "ttft_ms": {
+  "p50": 9092.125535011292,
+  "p95": 46959.21865701672,
+  "p99": 64892.74386882781
+ },
+ "plan": "v1 latency: cpu-only[0:6]=52.7ms -> gpu-slow[6:14]=52.7ms -> gpu-fast[14:28]=51.7ms | bottleneck 52.7ms",
+ "mean_bubble_ratio": 0.3902826232839283
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-131426-serve-hetero3-latency-tcp-r0
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset hetero3 --policy memory --repeat 1 --seed 1 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 13:20:01,721 [coord] INFO coordinator up: control 127.0.0.1:52953, data 127.0.0.1:52951 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 13:20:04,597 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 13:20:04,756 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 13:20:04,760 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 13:20:21,188 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 5.675300024449825, '2': 7.857199991121888, '4': 8.259299967903644, '8': 9.823299944400787}, 't_prefill_ms_per_tok': 0.5342, 'mem_layer_mb': 178.5}
+2026-11-21 13:20:36,813 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.332400043494999, '2': 5.485699977725744, '4': 7.616599963512272, '8': 11.649199994280934}, 't_prefill_ms_per_tok': 0.0229, 'mem_layer_mb': 89.3}
+2026-11-21 13:20:51,526 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 2.0617000409401953, '2': 2.3825999815016985, '4': 3.2828999683260918, '8': 5.373599997255951}, 't_prefill_ms_per_tok': 0.011, 'mem_layer_mb': 89.3}
+2026-11-21 13:20:52,191 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 6.722800026182085, 'gpu-slow': 6.944000022485852, 'gpu-fast': 8.44800000777468}, 'cpu-only': {'gpu-slow': 7.442, 'gpu-fast': 7.25, 'coordinator': 7.419}, 'gpu-slow': {'cpu-only': 7.292, 'gpu-fast': 7.336, 'coordinator': 8.911}, 'gpu-fast': {'cpu-only': 7.919, 'gpu-slow': 7.818, 'coordinator': 8.1}}}
+2026-11-21 13:20:52,193 [coord] INFO planned v1 memory: cpu-only[0:6]=53.3ms -> gpu-slow[6:17]=87.5ms -> gpu-fast[17:28]=40.2ms | bottleneck 87.5ms (1.74 ms to plan)
+2026-11-21 13:20:52,703 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 0.5}
+2026-11-21 13:23:07,235 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 11, 'load_s': 135.13}
+2026-11-21 13:23:07,862 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 11, 'load_s': 135.8}
+2026-11-21 13:23:07,863 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 135.67, 'plan': 'v1 memory: cpu-only[0:6]=53.3ms -> gpu-slow[6:17]=87.5ms -> gpu-fast[17:28]=40.2ms | bottleneck 87.5ms'}
+2026-11-21 13:26:32,860 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 13:26:32,924 [coord] INFO event node_lost {'node': 'gpu-slow'}
+2026-11-21 13:26:32,964 [coord] INFO event node_lost {'node': 'gpu-fast'}
+{
+ "throughput_tok_s": 27.162718881000792,
+ "tpot_ms": {
+  "p50": 799.6687828278054,
+  "p95": 1043.6006429115112,
+  "p99": 1081.4457097312788
+ },
+ "ttft_ms": {
+  "p50": 11870.328783988953,
+  "p95": 64266.0429239273,
+  "p99": 67644.84737634659
+ },
+ "plan": "v1 memory: cpu-only[0:6]=53.3ms -> gpu-slow[6:17]=87.5ms -> gpu-fast[17:28]=40.2ms | bottleneck 87.5ms",
+ "mean_bubble_ratio": 0.45327889121974396
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-131953-serve-hetero3-memory-tcp-r1
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset hetero3 --policy latency --repeat 1 --seed 1 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 13:26:45,755 [coord] INFO coordinator up: control 127.0.0.1:63500, data 127.0.0.1:63498 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 13:26:48,741 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 13:26:48,855 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 13:26:48,856 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 13:27:05,199 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 5.768700037151575, '2': 7.8316000290215015, '4': 8.168800035491586, '8': 10.325799987185746}, 't_prefill_ms_per_tok': 0.5245, 'mem_layer_mb': 178.5}
+2026-11-21 13:27:20,305 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.175400012172759, '2': 5.1040000398643315, '4': 7.803499989677221, '8': 15.474400017410517}, 't_prefill_ms_per_tok': 0.0259, 'mem_layer_mb': 89.3}
+2026-11-21 13:27:35,146 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 2.2255000076256692, '2': 2.7834000065922737, '4': 4.070199967827648, '8': 5.054199951700866}, 't_prefill_ms_per_tok': 0.0093, 'mem_layer_mb': 89.3}
+2026-11-21 13:27:35,695 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.0315999910235405, 'gpu-slow': 6.1592000420205295, 'gpu-fast': 6.020699976943433}, 'cpu-only': {'gpu-slow': 7.907, 'gpu-fast': 8.094, 'coordinator': 8.051}, 'gpu-slow': {'cpu-only': 6.964, 'gpu-fast': 6.464, 'coordinator': 7.116}, 'gpu-fast': {'cpu-only': 6.754, 'gpu-slow': 7.454, 'coordinator': 7.725}}}
+2026-11-21 13:27:35,702 [coord] INFO planned v1 latency: gpu-slow[0:7]=57.9ms -> gpu-fast[7:22]=64.4ms -> cpu-only[22:28]=53.0ms | bottleneck 64.4ms (6.01 ms to plan)
+2026-11-21 13:27:36,535 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 7, 'load_s': 0.83}
+2026-11-21 13:27:36,702 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 1.0}
+2026-11-21 13:27:37,219 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 15, 'load_s': 1.51}
+2026-11-21 13:27:37,221 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.52, 'plan': 'v1 latency: gpu-slow[0:7]=57.9ms -> gpu-fast[7:22]=64.4ms -> cpu-only[22:28]=53.0ms | bottleneck 64.4ms'}
+2026-11-21 13:30:44,967 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 13:30:45,038 [coord] INFO event node_lost {'node': 'gpu-fast'}
+2026-11-21 13:30:45,076 [coord] INFO event node_lost {'node': 'gpu-slow'}
+{
+ "throughput_tok_s": 29.681429623527386,
+ "tpot_ms": {
+  "p50": 744.9370137755833,
+  "p95": 1002.8072849640296,
+  "p99": 1058.2884068262856
+ },
+ "ttft_ms": {
+  "p50": 12279.342889785767,
+  "p95": 62653.139019012444,
+  "p99": 65060.36371707916
+ },
+ "plan": "v1 latency: gpu-slow[0:7]=57.9ms -> gpu-fast[7:22]=64.4ms -> cpu-only[22:28]=53.0ms | bottleneck 64.4ms",
+ "mean_bubble_ratio": 0.37293457410983893
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-132637-serve-hetero3-latency-tcp-r1
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset hetero3 --policy memory --repeat 2 --seed 2 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 13:30:57,734 [coord] INFO coordinator up: control 127.0.0.1:53170, data 127.0.0.1:53168 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 13:31:00,635 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 13:31:00,794 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 13:31:00,795 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 13:31:17,168 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 5.731599987484515, '2': 7.611699984408915, '4': 8.227700018323958, '8': 9.89709998248145}, 't_prefill_ms_per_tok': 0.5684, 'mem_layer_mb': 178.5}
+2026-11-21 13:31:32,816 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.1606000158935785, '2': 5.202100030146539, '4': 7.541999977547675, '8': 10.869899997487664}, 't_prefill_ms_per_tok': 0.0218, 'mem_layer_mb': 89.3}
+2026-11-21 13:31:47,652 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.9691999768838286, '2': 2.587400027550757, '4': 3.3079999848268926, '8': 5.613299959804863}, 't_prefill_ms_per_tok': 0.0089, 'mem_layer_mb': 89.3}
+2026-11-21 13:31:48,229 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 6.38420000905171, 'gpu-slow': 7.254399999510497, 'gpu-fast': 7.829300011508167}, 'cpu-only': {'gpu-slow': 7.63, 'gpu-fast': 6.69, 'coordinator': 7.223}, 'gpu-slow': {'cpu-only': 7.228, 'gpu-fast': 7.505, 'coordinator': 7.502}, 'gpu-fast': {'cpu-only': 6.621, 'gpu-slow': 7.423, 'coordinator': 8.244}}}
+2026-11-21 13:31:48,231 [coord] INFO planned v1 memory: cpu-only[0:6]=53.2ms -> gpu-slow[6:17]=86.7ms -> gpu-fast[17:28]=40.5ms | bottleneck 86.7ms (1.63 ms to plan)
+2026-11-21 13:31:49,212 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 6, 'load_s': 0.98}
+2026-11-21 13:31:49,390 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 11, 'load_s': 1.15}
+2026-11-21 13:31:49,480 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 11, 'load_s': 1.24}
+2026-11-21 13:31:49,482 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.25, 'plan': 'v1 memory: cpu-only[0:6]=53.2ms -> gpu-slow[6:17]=86.7ms -> gpu-fast[17:28]=40.5ms | bottleneck 86.7ms'}
+2026-11-21 13:36:37,700 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 13:36:37,768 [coord] INFO event node_lost {'node': 'gpu-slow'}
+2026-11-21 13:36:37,813 [coord] INFO event node_lost {'node': 'gpu-fast'}
+{
+ "throughput_tok_s": 24.49731991270656,
+ "tpot_ms": {
+  "p50": 806.2287217885519,
+  "p95": 1040.4721612213814,
+  "p99": 1084.49866062886
+ },
+ "ttft_ms": {
+  "p50": 13967.621803283691,
+  "p95": 69261.26163005829,
+  "p99": 78350.46993255615
+ },
+ "plan": "v1 memory: cpu-only[0:6]=53.2ms -> gpu-slow[6:17]=86.7ms -> gpu-fast[17:28]=40.5ms | bottleneck 86.7ms",
+ "mean_bubble_ratio": 0.45474278161133214
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-133049-serve-hetero3-memory-tcp-r2
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset hetero3 --policy latency --repeat 2 --seed 2 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 13:36:50,300 [coord] INFO coordinator up: control 127.0.0.1:63011, data 127.0.0.1:63009 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 13:36:53,274 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 13:36:53,448 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 13:36:53,449 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 13:37:09,933 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 5.616600043140352, '2': 7.775600010063499, '4': 8.121899969410151, '8': 10.243500000797212}, 't_prefill_ms_per_tok': 0.5036, 'mem_layer_mb': 178.5}
+2026-11-21 13:37:24,959 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.545000032521784, '2': 5.9130999725311995, '4': 6.174299982376397, '8': 9.803300024941564}, 't_prefill_ms_per_tok': 0.023, 'mem_layer_mb': 89.3}
+2026-11-21 13:37:39,786 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.7805999959819019, '2': 2.13350000558421, '4': 2.949099987745285, '8': 4.5396999921649694}, 't_prefill_ms_per_tok': 0.0089, 'mem_layer_mb': 89.3}
+2026-11-21 13:37:40,371 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 6.6911999601870775, 'gpu-slow': 8.490300038829446, 'gpu-fast': 7.033300003968179}, 'cpu-only': {'gpu-slow': 8.039, 'gpu-fast': 7.375, 'coordinator': 6.155}, 'gpu-slow': {'cpu-only': 6.997, 'gpu-fast': 7.429, 'coordinator': 7.12}, 'gpu-fast': {'cpu-only': 8.48, 'gpu-slow': 6.675, 'coordinator': 8.958}}}
+2026-11-21 13:37:40,377 [coord] INFO planned v1 latency: gpu-fast[0:16]=50.5ms -> gpu-slow[16:23]=46.7ms -> cpu-only[23:28]=43.7ms | bottleneck 50.5ms (5.91 ms to plan)
+2026-11-21 13:37:40,822 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 5, 'load_s': 0.44}
+2026-11-21 13:37:41,112 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 7, 'load_s': 0.73}
+2026-11-21 13:37:41,709 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 16, 'load_s': 1.33}
+2026-11-21 13:37:41,710 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.33, 'plan': 'v1 latency: gpu-fast[0:16]=50.5ms -> gpu-slow[16:23]=46.7ms -> cpu-only[23:28]=43.7ms | bottleneck 50.5ms'}
+2026-11-21 14:18:46,863 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 14:18:46,915 [coord] INFO event node_lost {'node': 'gpu-slow'}
+2026-11-21 14:18:46,967 [coord] INFO event node_lost {'node': 'gpu-fast'}
+{
+ "throughput_tok_s": 2.41424699003506,
+ "tpot_ms": {
+  "p50": 445.47689215371696,
+  "p95": 28036.629723911876,
+  "p99": 35596.36820809261
+ },
+ "ttft_ms": {
+  "p50": 33060.500144958496,
+  "p95": 2291567.5493597984,
+  "p99": 2292649.297194481
+ },
+ "plan": "v1 latency: gpu-fast[0:16]=50.5ms -> gpu-slow[16:23]=46.7ms -> cpu-only[23:28]=43.7ms | bottleneck 50.5ms",
+ "mean_bubble_ratio": 0.9637003166444564
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-133641-serve-hetero3-latency-tcp-r2
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset badlink3 --policy memory --repeat 0 --seed 0 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 14:18:58,818 [coord] INFO coordinator up: control 127.0.0.1:53893, data 127.0.0.1:53891 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:19:01,505 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:19:01,514 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:19:01,525 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:19:15,869 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 1.6911000129766762, '2': 2.201200055424124, '4': 3.0781999812461436, '8': 4.06399997882545}, 't_prefill_ms_per_tok': 0.0096, 'mem_layer_mb': 89.3}
+2026-11-21 14:19:30,898 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 1.9768000347539783, '2': 3.076499968301505, '4': 3.229099966119975, '8': 5.001400015316904}, 't_prefill_ms_per_tok': 0.0092, 'mem_layer_mb': 89.3}
+2026-11-21 14:19:45,987 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 1.7716999864205718, '2': 2.1946000051684678, '4': 2.967200009152293, '8': 4.4151999754831195}, 't_prefill_ms_per_tok': 0.0088, 'mem_layer_mb': 89.3}
+2026-11-21 14:19:48,044 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-b': 7.342299970332533, 'gpu-a': 8.168800035491586, 'gpu-badlink': 6.145499995909631}, 'gpu-b': {'gpu-a': 6.407, 'gpu-badlink': 6.121, 'coordinator': 7.516}, 'gpu-a': {'gpu-b': 6.983, 'gpu-badlink': 8.156, 'coordinator': 6.988}, 'gpu-badlink': {'gpu-b': 29.055, 'gpu-a': 27.346, 'coordinator': 25.904}}}
+2026-11-21 14:19:48,048 [coord] INFO planned v1 memory: gpu-b[0:10]=34.0ms -> gpu-a[10:19]=33.1ms -> gpu-badlink[19:28]=39.7ms | bottleneck 39.7ms (3.14 ms to plan)
+2026-11-21 14:19:49,159 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 10, 'load_s': 1.11}
+2026-11-21 14:19:49,180 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 9, 'load_s': 1.13}
+2026-11-21 14:19:49,180 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 9, 'load_s': 1.13}
+2026-11-21 14:19:49,182 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.13, 'plan': 'v1 memory: gpu-b[0:10]=34.0ms -> gpu-a[10:19]=33.1ms -> gpu-badlink[19:28]=39.7ms | bottleneck 39.7ms'}
+2026-11-21 14:21:51,784 [coord] INFO event node_lost {'node': 'gpu-b'}
+2026-11-21 14:21:51,816 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+2026-11-21 14:21:51,852 [coord] INFO event node_lost {'node': 'gpu-a'}
+{
+ "throughput_tok_s": 72.613498543082,
+ "tpot_ms": {
+  "p50": 255.30111280552637,
+  "p95": 295.9900999759937,
+  "p99": 300.05224837442944
+ },
+ "ttft_ms": {
+  "p50": 389.0821933746338,
+  "p95": 5745.7394838333075,
+  "p99": 8784.381339550016
+ },
+ "plan": "v1 memory: gpu-b[0:10]=34.0ms -> gpu-a[10:19]=33.1ms -> gpu-badlink[19:28]=39.7ms | bottleneck 39.7ms",
+ "mean_bubble_ratio": 0.20889592947121394
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-141850-serve-badlink3-memory-tcp-r0
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset badlink3 --policy latency --repeat 0 --seed 0 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 14:22:06,003 [coord] INFO coordinator up: control 127.0.0.1:65243, data 127.0.0.1:65241 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:22:08,867 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:22:08,874 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:22:08,876 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:22:23,462 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 1.7662000027485192, '2': 2.210700011346489, '4': 2.729300002101809, '8': 4.187599988654256}, 't_prefill_ms_per_tok': 0.0085, 'mem_layer_mb': 89.3}
+2026-11-21 14:22:37,889 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 1.660600013565272, '2': 2.0901000243611634, '4': 2.9646000475622714, '8': 4.226899996865541}, 't_prefill_ms_per_tok': 0.0087, 'mem_layer_mb': 89.3}
+2026-11-21 14:22:52,328 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 1.617399975657463, '2': 2.0483999978750944, '4': 2.750700048636645, '8': 4.063200030941516}, 't_prefill_ms_per_tok': 0.0087, 'mem_layer_mb': 89.3}
+2026-11-21 14:22:54,303 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-a': 8.608700009062886, 'gpu-badlink': 8.136399963404983, 'gpu-b': 7.3247000109404325}, 'gpu-a': {'gpu-badlink': 8.095, 'gpu-b': 7.013, 'coordinator': 7.019}, 'gpu-badlink': {'gpu-a': 27.357, 'gpu-b': 25.667, 'coordinator': 28.375}, 'gpu-b': {'gpu-a': 7.519, 'gpu-badlink': 6.874, 'coordinator': 7.604}}}
+2026-11-21 14:22:54,311 [coord] INFO planned v1 latency: gpu-badlink[0:7]=33.6ms -> gpu-b[7:17]=31.3ms -> gpu-a[17:28]=33.5ms | bottleneck 33.6ms (7.95 ms to plan)
+2026-11-21 14:22:55,101 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 7, 'load_s': 0.78}
+2026-11-21 14:22:55,432 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 10, 'load_s': 1.12}
+2026-11-21 14:22:55,494 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 11, 'load_s': 1.18}
+2026-11-21 14:22:55,495 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.18, 'plan': 'v1 latency: gpu-badlink[0:7]=33.6ms -> gpu-b[7:17]=31.3ms -> gpu-a[17:28]=33.5ms | bottleneck 33.6ms'}
+2026-11-21 14:25:03,326 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+2026-11-21 14:25:03,364 [coord] INFO event node_lost {'node': 'gpu-a'}
+2026-11-21 14:25:03,402 [coord] INFO event node_lost {'node': 'gpu-b'}
+{
+ "throughput_tok_s": 68.21870892152411,
+ "tpot_ms": {
+  "p50": 281.2756174804533,
+  "p95": 340.6473600278499,
+  "p99": 353.39848983549456
+ },
+ "ttft_ms": {
+  "p50": 331.06470108032227,
+  "p95": 7356.992220878595,
+  "p99": 10686.16993665695
+ },
+ "plan": "v1 latency: gpu-badlink[0:7]=33.6ms -> gpu-b[7:17]=31.3ms -> gpu-a[17:28]=33.5ms | bottleneck 33.6ms",
+ "mean_bubble_ratio": 0.27580853549101236
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-142155-serve-badlink3-latency-tcp-r0
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset badlink3 --policy memory --repeat 1 --seed 1 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 14:25:16,128 [coord] INFO coordinator up: control 127.0.0.1:65357, data 127.0.0.1:65355 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:25:19,194 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:25:19,205 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:25:19,208 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:25:34,334 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 1.6765000182203948, '2': 2.2128000273369253, '4': 3.175900026690215, '8': 4.726600018329918}, 't_prefill_ms_per_tok': 0.0088, 'mem_layer_mb': 89.3}
+2026-11-21 14:25:49,371 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 1.664999988861382, '2': 2.1086999913677573, '4': 2.841099980287254, '8': 4.296300001442432}, 't_prefill_ms_per_tok': 0.0087, 'mem_layer_mb': 89.3}
+2026-11-21 14:26:04,249 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 1.6645000432617962, '2': 2.0615000394172966, '4': 2.755400026217103, '8': 4.292799974791706}, 't_prefill_ms_per_tok': 0.0086, 'mem_layer_mb': 89.3}
+2026-11-21 14:26:06,229 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-b': 7.002500002272427, 'gpu-badlink': 7.097100024111569, 'gpu-a': 7.312400033697486}, 'gpu-b': {'gpu-badlink': 8.304, 'gpu-a': 6.912, 'coordinator': 7.18}, 'gpu-badlink': {'gpu-b': 26.5, 'gpu-a': 26.44, 'coordinator': 27.422}, 'gpu-a': {'gpu-b': 6.871, 'gpu-badlink': 7.671, 'coordinator': 6.353}}}
+2026-11-21 14:26:06,233 [coord] INFO planned v1 memory: gpu-b[0:10]=35.9ms -> gpu-badlink[10:19]=38.8ms -> gpu-a[19:28]=28.0ms | bottleneck 38.8ms (4.24 ms to plan)
+2026-11-21 14:26:06,949 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 9, 'load_s': 0.71}
+2026-11-21 14:26:06,982 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 9, 'load_s': 0.74}
+2026-11-21 14:26:07,058 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 10, 'load_s': 0.82}
+2026-11-21 14:26:07,060 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 0.83, 'plan': 'v1 memory: gpu-b[0:10]=35.9ms -> gpu-badlink[10:19]=38.8ms -> gpu-a[19:28]=28.0ms | bottleneck 38.8ms'}
+2026-11-21 14:27:31,544 [coord] INFO event node_lost {'node': 'gpu-b'}
+2026-11-21 14:27:31,581 [coord] INFO event node_lost {'node': 'gpu-a'}
+2026-11-21 14:27:31,618 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+{
+ "throughput_tok_s": 68.75523525055215,
+ "tpot_ms": {
+  "p50": 296.55848541295916,
+  "p95": 351.54339707258976,
+  "p99": 356.4120033472943
+ },
+ "ttft_ms": {
+  "p50": 565.392255783081,
+  "p95": 11398.684763908384,
+  "p99": 12157.823007106781
+ },
+ "plan": "v1 memory: gpu-b[0:10]=35.9ms -> gpu-badlink[10:19]=38.8ms -> gpu-a[19:28]=28.0ms | bottleneck 38.8ms",
+ "mean_bubble_ratio": 0.24650512899141178
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-142507-serve-badlink3-memory-tcp-r1
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset badlink3 --policy latency --repeat 1 --seed 1 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 14:27:44,605 [coord] INFO coordinator up: control 127.0.0.1:62765, data 127.0.0.1:62763 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:27:47,685 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:27:47,720 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:27:47,721 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:28:02,987 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 1.7905000131577253, '2': 2.254099992569536, '4': 2.9172999784350395, '8': 4.633900010958314}, 't_prefill_ms_per_tok': 0.009, 'mem_layer_mb': 89.3}
+2026-11-21 14:28:18,747 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 1.7459000227972865, '2': 2.2589999716728926, '4': 3.062700037844479, '8': 4.571600002236664}, 't_prefill_ms_per_tok': 0.0095, 'mem_layer_mb': 89.3}
+2026-11-21 14:28:33,681 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 1.744000008329749, '2': 2.222699986305088, '4': 2.91419995483011, '8': 4.42860001930967}, 't_prefill_ms_per_tok': 0.0088, 'mem_layer_mb': 89.3}
+2026-11-21 14:28:35,535 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-badlink': 7.500899955630302, 'gpu-a': 7.56950001232326, 'gpu-b': 7.744800008367747}, 'gpu-badlink': {'gpu-a': 26.038, 'gpu-b': 24.535, 'coordinator': 25.029}, 'gpu-a': {'gpu-badlink': 6.291, 'gpu-b': 6.587, 'coordinator': 7.753}, 'gpu-b': {'gpu-badlink': 7.298, 'gpu-a': 7.36, 'coordinator': 8.192}}}
+2026-11-21 14:28:35,547 [coord] INFO planned v1 latency: gpu-a[0:10]=33.8ms -> gpu-badlink[10:18]=35.6ms -> gpu-b[18:28]=33.2ms | bottleneck 35.6ms (12.20 ms to plan)
+2026-11-21 14:28:36,139 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 8, 'load_s': 0.59}
+2026-11-21 14:28:36,240 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 10, 'load_s': 0.69}
+2026-11-21 14:28:36,242 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 10, 'load_s': 0.69}
+2026-11-21 14:28:36,244 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 0.69, 'plan': 'v1 latency: gpu-a[0:10]=33.8ms -> gpu-badlink[10:18]=35.6ms -> gpu-b[18:28]=33.2ms | bottleneck 35.6ms'}
+2026-11-21 14:30:00,589 [coord] INFO event node_lost {'node': 'gpu-a'}
+2026-11-21 14:30:00,634 [coord] INFO event node_lost {'node': 'gpu-b'}
+2026-11-21 14:30:00,670 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+{
+ "throughput_tok_s": 69.11631060322722,
+ "tpot_ms": {
+  "p50": 296.9811566183449,
+  "p95": 353.89957947608747,
+  "p99": 357.9468722051504
+ },
+ "ttft_ms": {
+  "p50": 664.8833751678467,
+  "p95": 11473.296356201168,
+  "p99": 12471.798551082611
+ },
+ "plan": "v1 latency: gpu-a[0:10]=33.8ms -> gpu-badlink[10:18]=35.6ms -> gpu-b[18:28]=33.2ms | bottleneck 35.6ms",
+ "mean_bubble_ratio": 0.26763528857953933
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-142735-serve-badlink3-latency-tcp-r1
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset badlink3 --policy memory --repeat 2 --seed 2 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 14:30:12,316 [coord] INFO coordinator up: control 127.0.0.1:60388, data 127.0.0.1:60386 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:30:15,416 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:30:15,421 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:30:15,425 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:30:30,639 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 1.7801999929361045, '2': 2.1815000218339264, '4': 2.9443000094033778, '8': 4.518600006122142}, 't_prefill_ms_per_tok': 0.0091, 'mem_layer_mb': 89.3}
+2026-11-21 14:30:45,686 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 1.7977000097744167, '2': 2.181299962103367, '4': 2.9153000214137137, '8': 4.3178999912925065}, 't_prefill_ms_per_tok': 0.0088, 'mem_layer_mb': 89.3}
+2026-11-21 14:31:00,572 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 1.6982000088319182, '2': 2.1308999857865274, '4': 2.950300055090338, '8': 4.210899991448969}, 't_prefill_ms_per_tok': 0.0088, 'mem_layer_mb': 89.3}
+2026-11-21 14:31:02,630 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-b': 6.3328000251203775, 'gpu-a': 6.359299994073808, 'gpu-badlink': 8.362699998542666}, 'gpu-b': {'gpu-a': 6.151, 'gpu-badlink': 7.447, 'coordinator': 6.206}, 'gpu-a': {'gpu-b': 6.865, 'gpu-badlink': 7.359, 'coordinator': 7.26}, 'gpu-badlink': {'gpu-b': 24.802, 'gpu-a': 28.358, 'coordinator': 27.396}}}
+2026-11-21 14:31:02,634 [coord] INFO planned v1 memory: gpu-b[0:10]=32.5ms -> gpu-a[10:19]=29.9ms -> gpu-badlink[19:28]=40.3ms | bottleneck 40.3ms (4.07 ms to plan)
+2026-11-21 14:31:03,510 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 9, 'load_s': 0.87}
+2026-11-21 14:31:03,607 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 9, 'load_s': 0.97}
+2026-11-21 14:31:03,643 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 10, 'load_s': 1.0}
+2026-11-21 14:31:03,645 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.01, 'plan': 'v1 memory: gpu-b[0:10]=32.5ms -> gpu-a[10:19]=29.9ms -> gpu-badlink[19:28]=40.3ms | bottleneck 40.3ms'}
+2026-11-21 14:33:02,028 [coord] INFO event node_lost {'node': 'gpu-a'}
+2026-11-21 14:33:02,068 [coord] INFO event node_lost {'node': 'gpu-b'}
+2026-11-21 14:33:02,107 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+{
+ "throughput_tok_s": 65.02816707855855,
+ "tpot_ms": {
+  "p50": 282.34343135898763,
+  "p95": 328.6407251937969,
+  "p99": 342.66562051324087
+ },
+ "ttft_ms": {
+  "p50": 773.3228206634521,
+  "p95": 8649.34570789337,
+  "p99": 9653.452138900757
+ },
+ "plan": "v1 memory: gpu-b[0:10]=32.5ms -> gpu-a[10:19]=29.9ms -> gpu-badlink[19:28]=40.3ms | bottleneck 40.3ms",
+ "mean_bubble_ratio": 0.24149249340383314
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-143004-serve-badlink3-memory-tcp-r2
+>> serve.py --model Qwen/Qwen2.5-1.5B-Instruct --preset badlink3 --policy latency --repeat 2 --seed 2 --n 40 --rate 1.5 --max-prompt 1000 --max-out 300 --out-median 120 --prompt-median 300 --no-drift
+2026-11-21 14:33:15,265 [coord] INFO coordinator up: control 127.0.0.1:60479, data 127.0.0.1:60477 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:33:18,321 [coord] INFO event join {'node': 'gpu-badlink', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:33:18,359 [coord] INFO event join {'node': 'gpu-b', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:33:18,362 [coord] INFO event join {'node': 'gpu-a', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:33:33,550 [coord] INFO event profiled {'node': 'gpu-badlink', 't_decode_ms': {'1': 1.7321999766863883, '2': 2.1659000194631517, '4': 2.9267999925650656, '8': 4.512300016358495}, 't_prefill_ms_per_tok': 0.0093, 'mem_layer_mb': 89.3}
+2026-11-21 14:33:48,616 [coord] INFO event profiled {'node': 'gpu-b', 't_decode_ms': {'1': 1.7511000041849911, '2': 2.17510003130883, '4': 2.923599968198687, '8': 4.337200021836907}, 't_prefill_ms_per_tok': 0.0091, 'mem_layer_mb': 89.3}
+2026-11-21 14:34:03,636 [coord] INFO event profiled {'node': 'gpu-a', 't_decode_ms': {'1': 1.7041999963112175, '2': 2.3446999839507043, '4': 3.3452999778091908, '8': 5.0966000417247415}, 't_prefill_ms_per_tok': 0.0098, 'mem_layer_mb': 89.3}
+2026-11-21 14:34:05,704 [coord] INFO event rtt {'matrix': {'coordinator': {'gpu-badlink': 7.010200002696365, 'gpu-b': 7.714000006671995, 'gpu-a': 7.0112000103108585}, 'gpu-badlink': {'gpu-b': 24.164, 'gpu-a': 28.828, 'coordinator': 28.086}, 'gpu-b': {'gpu-badlink': 6.933, 'gpu-a': 8.087, 'coordinator': 7.315}, 'gpu-a': {'gpu-badlink': 7.614, 'gpu-b': 7.699, 'coordinator': 7.268}}}
+2026-11-21 14:34:05,716 [coord] INFO planned v1 latency: gpu-a[0:9]=33.9ms -> gpu-badlink[9:17]=35.5ms -> gpu-b[17:28]=35.8ms | bottleneck 35.8ms (11.57 ms to plan)
+2026-11-21 14:34:06,442 [coord] INFO event node_ready {'node': 'gpu-a', 'version': 1, 'loaded': 9, 'load_s': 0.72}
+2026-11-21 14:34:06,526 [coord] INFO event node_ready {'node': 'gpu-badlink', 'version': 1, 'loaded': 8, 'load_s': 0.81}
+2026-11-21 14:34:06,701 [coord] INFO event node_ready {'node': 'gpu-b', 'version': 1, 'loaded': 11, 'load_s': 0.98}
+2026-11-21 14:34:06,702 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 0.99, 'plan': 'v1 latency: gpu-a[0:9]=33.9ms -> gpu-badlink[9:17]=35.5ms -> gpu-b[17:28]=35.8ms | bottleneck 35.8ms'}
+2026-11-21 14:36:13,500 [coord] INFO event node_lost {'node': 'gpu-a'}
+2026-11-21 14:36:13,535 [coord] INFO event node_lost {'node': 'gpu-badlink'}
+2026-11-21 14:36:13,577 [coord] INFO event node_lost {'node': 'gpu-b'}
+{
+ "throughput_tok_s": 61.10947757136266,
+ "tpot_ms": {
+  "p50": 305.5107795886254,
+  "p95": 367.09753535255305,
+  "p99": 372.6549788309162
+ },
+ "ttft_ms": {
+  "p50": 715.1262760162354,
+  "p95": 10227.61732339859,
+  "p99": 11202.929801940918
+ },
+ "plan": "v1 latency: gpu-a[0:9]=33.9ms -> gpu-badlink[9:17]=35.5ms -> gpu-b[17:28]=35.8ms | bottleneck 35.8ms",
+ "mean_bubble_ratio": 0.30120736764646205
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-143306-serve-badlink3-latency-tcp-r2
+>> sustained.py --model Qwen/Qwen2.5-1.5B-Instruct --duration 420 --throttle-at 120
+2026-11-21 14:36:27,399 [coord] INFO coordinator up: control 127.0.0.1:50479, data 127.0.0.1:50477 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:36:30,390 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 14:36:30,562 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 14:36:30,563 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:36:47,918 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 6.98579999152571, '2': 9.244800021406263, '4': 9.994200023356825, '8': 12.728700006846339}, 't_prefill_ms_per_tok': 0.6028, 'mem_layer_mb': 178.5}
+2026-11-21 14:37:03,436 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.048999981023371, '2': 4.802699957508594, '4': 6.8799000000581145, '8': 10.206100007053465}, 't_prefill_ms_per_tok': 0.0204, 'mem_layer_mb': 89.3}
+2026-11-21 14:37:18,545 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.8084000330418348, '2': 2.2393999970518053, '4': 3.036300011444837, '8': 4.5201999600976706}, 't_prefill_ms_per_tok': 0.0091, 'mem_layer_mb': 89.3}
+2026-11-21 14:37:19,197 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 9.167699958197773, 'gpu-slow': 6.512899999506772, 'gpu-fast': 6.8718999973498285}, 'cpu-only': {'gpu-slow': 7.339, 'gpu-fast': 7.864, 'coordinator': 7.104}, 'gpu-slow': {'cpu-only': 7.299, 'gpu-fast': 6.958, 'coordinator': 7.859}, 'gpu-fast': {'cpu-only': 7.087, 'gpu-slow': 6.779, 'coordinator': 7.157}}}
+2026-11-21 14:37:19,204 [coord] INFO planned v1 latency: gpu-slow[0:7]=51.6ms -> gpu-fast[7:23]=52.1ms -> cpu-only[23:28]=53.5ms | bottleneck 53.5ms (5.39 ms to plan)
+2026-11-21 14:37:19,782 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 7, 'load_s': 0.57}
+2026-11-21 14:37:19,782 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 5, 'load_s': 0.58}
+2026-11-21 14:37:20,621 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 16, 'load_s': 1.41}
+2026-11-21 14:37:20,622 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.42, 'plan': 'v1 latency: gpu-slow[0:7]=51.6ms -> gpu-fast[7:23]=52.1ms -> cpu-only[23:28]=53.5ms | bottleneck 53.5ms'}
+2026-11-21 14:37:41,444 [coord] INFO event drift_baseline {'node': 'gpu-slow', 'baseline': 1.253}
+2026-11-21 14:37:41,444 [coord] INFO event drift_baseline {'node': 'gpu-fast', 'baseline': 1.38}
+2026-11-21 14:37:43,445 [coord] INFO event drift_baseline {'node': 'cpu-only', 'baseline': 1.006}
+2026-11-21 14:39:17,501 [coord] INFO event replan_trigger {'reason': 'drift gpu-slow x1.41', 'scale': {'gpu-slow': 1.412}}
+2026-11-21 14:39:17,512 [coord] INFO planned v2 latency: gpu-slow[0:6]=61.8ms -> gpu-fast[6:22]=52.1ms -> cpu-only[22:28]=63.5ms | bottleneck 63.5ms (10.78 ms to plan)
+2026-11-21 14:39:17,515 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 2, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 14:39:17,708 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 2, 'loaded': 1, 'load_s': 0.19}
+2026-11-21 14:39:17,709 [coord] INFO event staging_oom_fallback {'version': 2}
+2026-11-21 14:39:20,652 [coord] INFO event set_slowdown {'node': 'gpu-fast', 'factor': 2.5}
+2026-11-21 14:41:07,968 [coord] INFO event drained {'version': 1}
+2026-11-21 14:41:07,970 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 2, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 14:41:07,979 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 2, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 14:41:08,907 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 2, 'loaded': 16, 'load_s': 0.91}
+2026-11-21 14:41:08,907 [coord] INFO event switch {'version': 2, 'old': 1, 'stage_s': 111.4, 'plan': 'v2 latency: gpu-slow[0:6]=61.8ms -> gpu-fast[6:22]=52.1ms -> cpu-only[22:28]=63.5ms | bottleneck 63.5ms'}
+2026-11-21 14:41:39,585 [coord] INFO event replan_trigger {'reason': 'drift gpu-fast x2.75', 'scale': {'gpu-slow': 1.412, 'gpu-fast': 2.745}}
+2026-11-21 14:41:39,592 [coord] INFO planned v3 latency: gpu-fast[0:12]=103.4ms -> gpu-slow[12:22]=100.8ms -> cpu-only[22:28]=63.5ms | bottleneck 103.4ms (6.50 ms to plan)
+2026-11-21 14:41:39,594 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 3, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 14:41:39,595 [coord] INFO event staging_oom_fallback {'version': 3}
+2026-11-21 14:43:11,411 [coord] INFO event drained {'version': 2}
+2026-11-21 14:43:11,415 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 3, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 14:43:12,062 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 3, 'loaded': 10, 'load_s': 0.63}
+2026-11-21 14:43:12,410 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 3, 'loaded': 12, 'load_s': 0.97}
+2026-11-21 14:43:12,412 [coord] INFO event switch {'version': 3, 'old': 2, 'stage_s': 92.82, 'plan': 'v3 latency: gpu-fast[0:12]=103.4ms -> gpu-slow[12:22]=100.8ms -> cpu-only[22:28]=63.5ms | bottleneck 103.4ms'}
+2026-11-21 14:43:42,658 [coord] INFO event replan_trigger {'reason': 'drift gpu-slow x1.09', 'scale': {'gpu-slow': 1.091, 'gpu-fast': 2.745}}
+2026-11-21 14:43:42,669 [coord] INFO planned v4 latency: gpu-fast[0:11]=95.1ms -> gpu-slow[11:22]=86.2ms -> cpu-only[22:28]=63.5ms | bottleneck 95.1ms (10.31 ms to plan)
+2026-11-21 14:43:42,670 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 4, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 14:43:42,674 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 4, 'loaded': 0, 'load_s': 0.0}
+2026-11-21 14:43:42,869 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 4, 'loaded': 1, 'load_s': 0.2}
+2026-11-21 14:43:42,869 [coord] INFO event switch {'version': 4, 'old': 3, 'stage_s': 0.2, 'plan': 'v4 latency: gpu-fast[0:11]=95.1ms -> gpu-slow[11:22]=86.2ms -> cpu-only[22:28]=63.5ms | bottleneck 95.1ms'}
+2026-11-21 14:44:54,818 [coord] INFO event drained {'version': 3}
+2026-11-21 14:45:13,839 [coord] INFO event node_lost {'node': 'cpu-only'}
+2026-11-21 14:45:13,901 [coord] INFO event node_lost {'node': 'gpu-fast'}
+2026-11-21 14:45:13,930 [coord] INFO event node_lost {'node': 'gpu-slow'}
+drift-on {
+ "throughput_pre": 28.571428571428573,
+ "throughput_post": 11.970212765957447,
+ "transition": {
+  "steady_after_tok_s": 13.4,
+  "switch_t": 228.2564673423767,
+  "lost_token_s": 463.00000000000006,
+  "degraded_s_equiv": 34.552238805970156
+ },
+ "plan": "v4 latency: gpu-fast[0:11]=95.1ms -> gpu-slow[11:22]=86.2ms -> cpu-only[22:28]=63.5ms | bottleneck 95.1ms"
+}
+2026-11-21 14:45:14,880 [coord] INFO coordinator up: control 127.0.0.1:54024, data 127.0.0.1:54022 (tcp), model Qwen/Qwen2.5-1.5B-Instruct on cuda
+2026-11-21 14:45:18,138 [coord] INFO event join {'node': 'cpu-only', 'accel': 'CPU', 'mem_free_gb': 1.6}
+2026-11-21 14:45:18,291 [coord] INFO event join {'node': 'gpu-slow', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 1.5}
+2026-11-21 14:45:18,292 [coord] INFO event join {'node': 'gpu-fast', 'accel': 'NVIDIA GeForce RTX 4060 Laptop GPU', 'mem_free_gb': 2.0}
+2026-11-21 14:45:36,317 [coord] INFO event profiled {'node': 'cpu-only', 't_decode_ms': {'1': 6.981200014706701, '2': 8.719999983441085, '4': 9.182300011161715, '8': 11.981300020124763}, 't_prefill_ms_per_tok': 0.5964, 'mem_layer_mb': 178.5}
+2026-11-21 14:45:52,007 [coord] INFO event profiled {'node': 'gpu-slow', 't_decode_ms': {'1': 4.12769999820739, '2': 5.179499974474311, '4': 6.6303000203333795, '8': 9.827999980188906}, 't_prefill_ms_per_tok': 0.02, 'mem_layer_mb': 89.3}
+2026-11-21 14:46:06,804 [coord] INFO event profiled {'node': 'gpu-fast', 't_decode_ms': {'1': 1.6632000333629549, '2': 2.0647000055760145, '4': 2.8030999819748104, '8': 4.294000042136759}, 't_prefill_ms_per_tok': 0.0087, 'mem_layer_mb': 89.3}
+2026-11-21 14:46:07,407 [coord] INFO event rtt {'matrix': {'coordinator': {'cpu-only': 7.793500029947609, 'gpu-slow': 6.907999981194735, 'gpu-fast': 6.216499954462051}, 'cpu-only': {'gpu-slow': 7.275, 'gpu-fast': 6.311, 'coordinator': 7.515}, 'gpu-slow': {'cpu-only': 7.865, 'gpu-fast': 7.606, 'coordinator': 8.023}, 'gpu-fast': {'cpu-only': 7.029, 'gpu-slow': 7.081, 'coordinator': 7.08}}}
+2026-11-21 14:46:07,410 [coord] INFO planned v1 latency: gpu-slow[0:7]=50.2ms -> gpu-fast[7:23]=48.4ms -> cpu-only[23:28]=49.7ms | bottleneck 50.2ms (2.99 ms to plan)
+2026-11-21 14:46:08,038 [coord] INFO event node_ready {'node': 'gpu-slow', 'version': 1, 'loaded': 7, 'load_s': 0.62}
+2026-11-21 14:46:08,184 [coord] INFO event node_ready {'node': 'cpu-only', 'version': 1, 'loaded': 5, 'load_s': 0.77}
+2026-11-21 14:46:08,779 [coord] INFO event node_ready {'node': 'gpu-fast', 'version': 1, 'loaded': 16, 'load_s': 1.37}
+2026-11-21 14:46:08,781 [coord] INFO event switch {'version': 1, 'old': None, 'stage_s': 1.37, 'plan': 'v1 latency: gpu-slow[0:7]=50.2ms -> gpu-fast[7:23]=48.4ms -> cpu-only[23:28]=49.7ms | bottleneck 50.2ms'}
+2026-11-21 14:48:08,800 [coord] INFO event set_slowdown {'node': 'gpu-fast', 'factor': 2.5}
+2026-11-21 14:54:40,011 [coord] ERROR STALL: 12 active, 0 waiting, 3 in flight, no dispatch for 305s; thread dump follows
+Thread 0x00001d14 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x0000294c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00006428 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x000072e0 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00005594 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00006850 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x000035d0 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x0000128c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00002918 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x000065c0 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00001090 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00009038 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 453 in result
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 37 in client
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x0000802c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\queue.py", line 171 in get
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 436 in _pump
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x000093fc (most recent call first):
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 79 in _recv_exact
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 171 in _serve
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00002f9c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 705 in readinto
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 533 in recv
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 255 in _control_conn
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x0000082c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 705 in readinto
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 533 in recv
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 255 in _control_conn
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00003858 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 705 in readinto
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 533 in recv
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 255 in _control_conn
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Current thread 0x0000814c (most recent call first):
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 708 in _watchdog_loop
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00004d88 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 324 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\queue.py", line 180 in get
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 685 in _ctrl_sender_loop
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x000083e0 (most recent call first):
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 487 in _drift_loop
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00006e90 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 324 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\queue.py", line 180 in get
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 721 in _sampler_loop
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00004d0c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 324 in wait
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 600 in _scheduler_loop
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x0000442c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 293 in accept
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 246 in _accept_loop
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x000007b4 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 293 in accept
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\worker.py", line 51 in _accept
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00002fbc (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 293 in accept
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 162 in _accept
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00007924 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\queue.py", line 171 in get
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 436 in _pump
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00007748 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 320 in wait
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\queue.py", line 171 in get
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 436 in _pump
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00006ae8 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 293 in accept
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\coordinator.py", line 246 in _accept_loop
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00006148 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 293 in accept
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\worker.py", line 51 in _accept
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x00007c8c (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\socket.py", line 293 in accept
+  File "D:\Faisal\Creations\Claude\lanshard\lanshard\transport.py", line 162 in _accept
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 953 in run
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016 in _bootstrap_inner
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 973 in _bootstrap
+
+Thread 0x000024d4 (most recent call first):
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1116 in _wait_for_tstate_lock
+  File "C:\Users\FAIS\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1100 in join
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 43 in closed_loop
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 81 in run_once
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 129 in main
+  File "D:\Faisal\Creations\Claude\lanshard\bench\sustained.py", line 137 in <module>
+2026-11-21 14:54:40,019 [coord] INFO event stall {'active': 12, 'waiting': 0, 'inflight': 3}
+drift-off {
+ "throughput_pre": 27.82857142857143,
+ "throughput_post": 1.3957446808510638,
+ "transition": {
+  "steady_after_tok_s": 0.0,
+  "switch_t": null,
+  "lost_token_s": 0.0,
+  "degraded_s_equiv": null
+ },
+ "plan": "v1 latency: gpu-slow[0:7]=50.2ms -> gpu-fast[7:23]=48.4ms -> cpu-only[23:28]=49.7ms | bottleneck 50.2ms"
+}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-143617-rq2-sustained-420s
+2026-11-21 14:55:31,822 [coord] INFO event node_lost {'node': 'cpu-only'}
+>> quality.py --model Qwen/Qwen2.5-1.5B-Instruct --exact 50 --mmlu 300 --gsm8k 60
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:   0%|          | 1/338 [00:00<02:23,  2.34it/s]Loading weights:  47%|####7     | 159/338 [00:00<00:00, 368.15it/s]Loading weights:  68%|######8   | 230/338 [00:00<00:00, 315.41it/s]Loading weights:  83%|########3 | 281/338 [00:01<00:00, 288.27it/s]Loading weights:  95%|#########4| 321/338 [00:01<00:00, 304.47it/s]Loading weights: 100%|##########| 338/338 [00:01<00:00, 279.78it/s]
+B1 exact 0/50
+B1 mmlu 0/300
+B1 mmlu 100/300
+B1 mmlu 200/300
+B1 gsm8k 0/60
+LANShard exact done
+LANShard mmlu done
+LANShard gsm8k done
+exact {"n": 50, "exact_match": 0.92}
+mmlu {"n": 300, "exact_match": 0.9866666666666667, "acc_b1": 0.6233333333333333, "acc_lanshard": 0.62, "answer_agreement": 0.9966666666666667}
+gsm8k {"n": 60, "exact_match": 0.85, "acc_b1": 0.5, "acc_lanshard": 0.5, "answer_agreement": 0.9166666666666666}
+results: D:\Faisal\Creations\Claude\lanshard\results\20261121-152039-quality
+>> plot.py
+# LANShard result tables (generated by bench/plot.py)
+
+### RQ3: per-hop latency (loopback)
+
+| payload | backend | RTT p50 ms | RTT p99 ms | ser ms | deser ms | transfer ms | added vs TCP (one-way) ms |
+|---|---|---|---|---|---|---|---|
+| 8 KB | gloo | 0.423 | 0.719 | 0.075 | 0.026 | 0.110 | +0.154 |
+| 8 KB | grpc | 0.319 | 0.444 | 0.038 | 0.028 | 0.094 | +0.102 |
+| 8 KB | tcp | 0.115 | 0.208 | 0.020 | 0.011 | 0.027 | +0.000 |
+| 16 KB | gloo | 0.454 | 0.752 | 0.082 | 0.026 | 0.119 | +0.167 |
+| 16 KB | grpc | 0.389 | 0.599 | 0.052 | 0.035 | 0.107 | +0.135 |
+| 16 KB | tcp | 0.119 | 0.235 | 0.021 | 0.011 | 0.028 | +0.000 |
+| 64 KB | gloo | 0.744 | 1.394 | 0.138 | 0.043 | 0.190 | +0.299 |
+| 64 KB | grpc | 0.580 | 0.821 | 0.073 | 0.044 | 0.173 | +0.217 |
+| 64 KB | tcp | 0.146 | 0.242 | 0.022 | 0.012 | 0.039 | +0.000 |
+| 1024 KB | gloo | 2.765 | 5.984 | 0.174 | 0.680 | 0.528 | +0.755 |
+| 1024 KB | grpc | 8.335 | 37.886 | 1.139 | 0.952 | 2.077 | +3.539 |
+| 1024 KB | tcp | 1.256 | 8.093 | 0.037 | 0.022 | 0.569 | +0.000 |
+| 4096 KB | gloo | 7.745 | 29.832 | 0.281 | 1.998 | 1.593 | +1.806 |
+| 4096 KB | grpc | 26.381 | 54.447 | 3.745 | 2.946 | 6.499 | +11.124 |
+| 4096 KB | tcp | 4.133 | 17.565 | 0.046 | 0.027 | 1.993 | +0.000 |
+| 16384 KB | gloo | 35.189 | 72.521 | 0.947 | 8.564 | 8.084 | +9.384 |
+| 16384 KB | grpc | 115.026 | 140.273 | 14.341 | 11.337 | 31.835 | +49.302 |
+| 16384 KB | tcp | 16.421 | 28.451 | 0.065 | 0.049 | 8.097 | +0.000 |
+
+### RQ3: per-hop latency (wifi)
+
+| payload | backend | RTT p50 ms | RTT p99 ms | ser ms | deser ms | transfer ms | added vs TCP (one-way) ms |
+|---|---|---|---|---|---|---|---|
+| 8 KB | gloo | 7.595 | 37.469 | 0.000 | 0.036 | 3.762 | -0.140 |
+| 8 KB | grpc | 7.495 | 43.411 | 0.000 | 0.048 | 3.699 | -0.190 |
+| 8 KB | tcp | 7.875 | 37.454 | 0.000 | 0.021 | 3.917 | +0.000 |
+| 16 KB | gloo | 8.463 | 17.190 | 0.000 | 0.044 | 4.187 | +0.169 |
+| 16 KB | grpc | 8.838 | 40.084 | 0.000 | 0.077 | 4.342 | +0.356 |
+| 16 KB | tcp | 8.125 | 39.259 | 0.000 | 0.023 | 4.039 | +0.000 |
+| 64 KB | gloo | 10.592 | 40.566 | 0.000 | 0.069 | 5.227 | +0.343 |
+| 64 KB | grpc | 11.130 | 41.927 | 0.000 | 0.107 | 5.458 | +0.612 |
+| 64 KB | tcp | 9.906 | 42.421 | 0.000 | 0.037 | 4.916 | +0.000 |
+| 1024 KB | gloo | 53.841 | 55.632 | 0.000 | 0.739 | 26.181 | -0.049 |
+| 1024 KB | grpc | 61.252 | 79.296 | 0.000 | 0.998 | 29.628 | +3.656 |
+| 1024 KB | tcp | 53.939 | 97.217 | 0.000 | 0.081 | 26.888 | +0.000 |
+| 4096 KB | gloo | 188.102 | 211.991 | 0.000 | 2.288 | 91.763 | +1.378 |
+| 4096 KB | grpc | 207.606 | 222.652 | 0.000 | 2.909 | 100.894 | +11.130 |
+| 4096 KB | tcp | 185.346 | 196.848 | 0.000 | 0.071 | 92.602 | +0.000 |
+| 16384 KB | gloo | 717.991 | 732.281 | 0.000 | 8.052 | 350.944 | +7.862 |
+| 16384 KB | grpc | 793.850 | 824.742 | 0.000 | 11.146 | 385.779 | +45.792 |
+| 16384 KB | tcp | 702.267 | 705.746 | 0.000 | 0.059 | 351.074 | +0.000 |
+
+### RQ1: partitioning policy (median [IQR] over repeats)
+
+| preset | policy | runs | throughput tok/s | TPOT p50 ms | TPOT p99 ms | TTFT p50 ms | bubble | plan |
+|---|---|---|---|---|---|---|---|---|
+| badlink3 | memory | 3 | 68.8 [66.9-70.7] | 282 | 343 [321-350] | 565 | 0.24 | gpu-b[0:10]=32.5ms -> gpu-a[10:19]=29.9ms -> gpu-badlink[19:28]=40.3ms | bottleneck 40.3ms |
+| hetero3 | memory | 2 | 25.8 [25.2-26.5] | 803 | 1083 [1082-1084] | 12919 | 0.45 | cpu-only[0:6]=53.2ms -> gpu-slow[6:17]=86.7ms -> gpu-fast[17:28]=40.5ms | bottleneck 86.7ms |
+| badlink3 | latency | 3 | 68.2 [64.7-68.7] | 297 | 358 [356-365] | 665 | 0.28 | gpu-a[0:9]=33.9ms -> gpu-badlink[9:17]=35.5ms -> gpu-b[17:28]=35.8ms | bottleneck 35.8ms |
+| hetero3 | latency | 3 | 29.7 [16.0-30.1] | 710 | 1058 [1023-18327] | 12279 | 0.39 | gpu-fast[0:16]=50.5ms -> gpu-slow[16:23]=46.7ms -> cpu-only[23:28]=43.7ms | bottleneck 50.5ms |
+
+### RQ2: sustained run with a throttled node
+
+| drift handling | throughput before | after throttle (steady) | repartitions | transition cost (s of throughput) | TPOT p99 ms |
+|---|---|---|---|---|---|
+| drift-off | 27.8 | 1.4 | 0 | 0.0 | 5794 |
+| drift-on | 28.6 | 12.0 | 3 | 34.6 | 967 |
+
+### Quality vs B1 (single-machine HF)
+
+Plan: `v1 latency: gpu-slow[0:7]=50.2ms -> cpu-only[7:12]=45.7ms -> gpu-fast[12:28]=50.5ms | bottleneck 50.5ms`
+
+| task | n | greedy exact match | B1 accuracy | LANShard accuracy | answer agreement |
+|---|---|---|---|---|---|
+| exact | 50 | 0.920 | - | - | - |
+| mmlu | 300 | 0.987 | 0.623 | 0.620 | 0.997 |
+| gsm8k | 60 | 0.850 | 0.500 | 0.500 | 0.917 |
+
+### B1 single-machine reference
+
+Throughput 27.7 tok/s (one request at a time), TPOT p50 36 ms / p99 41 ms, peak VRAM 3.02 GB.
+
+### Device table (from the discovery probe, latest run)
+
+| node | OS | accelerator | device | free mem GB (advertised) | emulated slowdown | t_layer b=1 ms | t_layer b=4 ms | prefill ms/tok | layer MB |
+|---|---|---|---|---|---|---|---|---|---|
+| gpu-badlink | Windows 10 | NVIDIA GeForce RTX 4060 Laptop GPU | float16 | 2.0 | 1.0 | 1.73 | 2.93 | 0.0093 | 89 |
+| gpu-b | Windows 10 | NVIDIA GeForce RTX 4060 Laptop GPU | float16 | 2.0 | 1.0 | 1.75 | 2.92 | 0.0091 | 89 |
+| gpu-a | Windows 10 | NVIDIA GeForce RTX 4060 Laptop GPU | float16 | 2.0 | 1.0 | 1.70 | 3.35 | 0.0098 | 89 |
+figures in D:\Faisal\Creations\Claude\lanshard\results\figures

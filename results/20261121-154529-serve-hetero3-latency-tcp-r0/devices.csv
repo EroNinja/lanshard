@@ -1,0 +1,4 @@
+node,host,os,accel,device,mem_free_gb,ram_total_gb,slowdown,t_layer_b1_ms,t_layer_b4_ms,t_prefill_ms_per_tok,mem_layer_mb
+cpu-only,LAPTOP-6915658E,Windows 10,CPU,cpu,1.6,15.8,1.5,6.6843999666161835,9.529199975077063,0.558976953243473,178.5
+gpu-fast,LAPTOP-6915658E,Windows 10,NVIDIA GeForce RTX 4060 Laptop GPU,cuda,2.0,15.8,1.0,2.036700025200844,3.6976999836042523,0.010660156249286956,89.3
+gpu-slow,LAPTOP-6915658E,Windows 10,NVIDIA GeForce RTX 4060 Laptop GPU,cuda,1.5,15.8,2.0,4.747400002088398,6.882800022140145,0.021655468799508526,89.3

@@ -1,0 +1,13 @@
+torch>=2.3
+transformers>=4.45
+safetensors
+huggingface_hub
+grpcio>=1.60
+protobuf
+psutil
+numpy
+# experiments
+datasets
+matplotlib
+pandas
+pytest

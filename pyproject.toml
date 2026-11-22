@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lanshard"
+version = "0.1.0"
+description = "Device-aware LLM layer partitioning over Wi-Fi (CSE 598, Team 20)"
+requires-python = ">=3.10"
+dependencies = ["torch>=2.3", "transformers>=4.45", "safetensors", "huggingface_hub", "grpcio>=1.60",
+                "protobuf", "psutil", "numpy"]
+
+[project.optional-dependencies]
+bench = ["datasets", "matplotlib", "pandas", "pytest"]
+
+[project.scripts]
+lanshard-coordinator = "lanshard.coordinator:main"
+lanshard-worker = "lanshard.worker:main"
+lanshard-cluster = "lanshard.cluster:main"
+
+[tool.setuptools]
+packages = ["lanshard"]
