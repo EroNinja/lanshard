@@ -3,6 +3,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -11,6 +12,6 @@ jobs:
       - name: Install (CPU-only torch)
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install transformers safetensors huggingface_hub grpcio protobuf psutil numpy pytest
+          pip install transformers safetensors huggingface_hub grpcio protobuf psutil numpy pytest pytest-timeout
       - name: Unit tests (partitioner, transports; model test skips without cached weights)
-        run: python -m pytest tests -q
+        run: python -m pytest tests -q -v --timeout 120

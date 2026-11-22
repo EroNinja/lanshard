@@ -270,13 +270,24 @@ class GrpcServer(Server):
 
 
 # --------------------------------------------------------------------------- Gloo
-def _gloo_pg(host: str, port: int, rank: int):
+def _gloo_pg(host: str, port: int, rank: int, local_ip: Optional[str] = None):
+    """Two-rank Gloo group. ``local_ip`` pins Gloo's network device to the address this link
+    actually uses; by default Gloo resolves the machine's hostname, which on some hosts (CI
+    runners, multi-homed laptops) points at an unreachable interface and hangs the handshake."""
     import torch.distributed as dist
     from datetime import timedelta
 
     store = dist.TCPStore(host, port, 2, rank == 0, timeout=timedelta(seconds=60), use_libuv=False)
-    pg = dist.ProcessGroupGloo(store, rank, 2, timedelta(seconds=600))
-    return store, pg
+    timeout = timedelta(seconds=600)
+    if local_ip:
+        try:
+            opts = dist.ProcessGroupGloo._Options()
+            opts._timeout = timeout
+            opts._devices = [dist.ProcessGroupGloo.create_device(hostname=local_ip)]
+            return store, dist.ProcessGroupGloo(store, rank, 2, opts)
+        except (AttributeError, TypeError, RuntimeError):
+            pass  # older torch: fall back to the default device
+    return store, dist.ProcessGroupGloo(store, rank, 2, timeout)
 
 
 class GlooSender(Sender):
@@ -286,8 +297,9 @@ class GlooSender(Sender):
         host, port = address.rsplit(":", 1)
         s = socket.create_connection((host, int(port)))
         store_port = struct.unpack("!I", _recv_exact(s, 4))[0]
+        local_ip = s.getsockname()[0]
         s.close()
-        self.store, self.pg = _gloo_pg(host, store_port, 1)
+        self.store, self.pg = _gloo_pg(host, store_port, 1, local_ip)
         self.lock = threading.Lock()
         self.stats = LinkStats()
 
@@ -330,14 +342,16 @@ class GlooServer(Server):
             except OSError:
                 return
             sp = free_port()
+            local_ip = c.getsockname()[0]
             # the store master must exist before the peer connects to it
-            threading.Thread(target=self._pair, args=(sp,), daemon=True).start()
+            threading.Thread(target=self._pair, args=(sp, local_ip), daemon=True).start()
             time.sleep(0.05)
             c.sendall(struct.pack("!I", sp))
             c.close()
 
-    def _pair(self, store_port: int):
-        store, pg = _gloo_pg("0.0.0.0" if self.bind_host in ("", "0.0.0.0") else self.bind_host, store_port, 0)
+    def _pair(self, store_port: int, local_ip: Optional[str] = None):
+        store, pg = _gloo_pg("0.0.0.0" if self.bind_host in ("", "0.0.0.0") else self.bind_host, store_port, 0,
+                             local_ip)
         lens = torch.empty(2, dtype=torch.int64)
         try:
             while True:
