@@ -92,7 +92,7 @@ class Worker:
     def __init__(self, coordinator: str, node_id: Optional[str] = None, device: Optional[str] = None,
                  dtype: Optional[str] = None, transport: str = "tcp", host: str = "0.0.0.0",
                  advertise: Optional[str] = None, slowdown: float = 1.0, mem_limit_gb: Optional[float] = None,
-                 netem: Optional[str] = None, profile_budget_s: float = 15.0):
+                 netem: Optional[str] = None, profile_budget_s: float = 15.0, wire_dtype: str = "float16"):
         self.coordinator = coordinator
         self.node_id = node_id or f"{socket.gethostname()}-{uuid.uuid4().hex[:4]}"
         self.device = device or default_device()
@@ -102,7 +102,7 @@ class Worker:
         elif os.environ.get("LANSHARD_THREADS"):
             torch.set_num_threads(int(os.environ["LANSHARD_THREADS"]))
         self.dtype = parse_dtype(dtype) if dtype else default_dtype(self.device)
-        self.wire_dtype = torch.float16
+        self.wire_dtype = parse_dtype(wire_dtype)
         self.transport = transport
         self.host = host
         self.advertise = advertise
@@ -380,11 +380,12 @@ def main(argv=None):
     ap.add_argument("--mem-limit-gb", type=float, help="advertise at most this much free memory")
     ap.add_argument("--netem", help="outbound delay emulation: wifi | none | profile.json | base=..,jitter=..")
     ap.add_argument("--profile-budget", type=float, default=15.0)
+    ap.add_argument("--wire-dtype", default="float16", help="dtype of hidden states sent to the next stage")
     ap.add_argument("--log", default="INFO")
     a = ap.parse_args(argv)
     logging.basicConfig(level=a.log, format=f"%(asctime)s [{a.node_id or 'worker'}] %(levelname)s %(message)s")
     Worker(a.coordinator, a.node_id, a.device, a.dtype, a.transport, a.host, a.advertise, a.slowdown,
-           a.mem_limit_gb, a.netem, a.profile_budget).run()
+           a.mem_limit_gb, a.netem, a.profile_budget, a.wire_dtype).run()
 
 
 if __name__ == "__main__":

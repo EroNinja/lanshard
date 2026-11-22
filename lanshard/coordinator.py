@@ -143,10 +143,11 @@ class Coordinator:
                  advertise: Optional[str] = None, policy: str = "latency",
                  sched: Optional[SchedulerConfig] = None, drift: Optional[DriftConfig] = None,
                  netem: Optional[str] = None, profile_budget_s: float = 15.0, overhead_gb: float = 0.6,
-                 rtt_payload: Optional[int] = None):
+                 rtt_payload: Optional[int] = None, wire_dtype: str = "float16"):
         self.model = model
         self.device = device or default_device()
         self.dtype = parse_dtype(dtype) if dtype else default_dtype(self.device)
+        self.wire_dtype = parse_dtype(wire_dtype)  # what stage 1 receives; workers choose their own
         self.transport = transport
         self.host, self.port, self.advertise = host, port, advertise
         self.policy = policy
@@ -795,7 +796,7 @@ class Coordinator:
         ids = []
         for r, s in zip(reqs, segs):
             ids.extend(r.tokens[s.start:s.start + s.n])
-        x = self.head.embed_tokens(torch.tensor(ids, dtype=torch.long)).to(torch.float16)
+        x = self.head.embed_tokens(torch.tensor(ids, dtype=torch.long)).to(self.wire_dtype)
         embed_ms = (time.perf_counter() - t0) * 1e3
         with self.lock:
             mb = self.next_mb

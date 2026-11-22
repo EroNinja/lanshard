@@ -42,7 +42,8 @@ def spawn_worker(coord_addr: str, spec: Dict, transport: str, log_dir: Optional[
     args = [sys.executable, "-m", "lanshard.worker", "--coordinator", coord_addr, "--transport", transport,
             "--host", "127.0.0.1", "--profile-budget", str(spec.get("profile_budget", profile_budget))]
     for key, flag in (("node_id", "--node-id"), ("device", "--device"), ("dtype", "--dtype"),
-                      ("slowdown", "--slowdown"), ("mem_limit_gb", "--mem-limit-gb"), ("netem", "--netem")):
+                      ("slowdown", "--slowdown"), ("mem_limit_gb", "--mem-limit-gb"), ("netem", "--netem"),
+                      ("wire_dtype", "--wire-dtype")):
         if spec.get(key) not in (None, ""):
             args += [flag, str(spec[key])]
     env = dict(os.environ, PYTHONPATH=ROOT + os.pathsep + os.environ.get("PYTHONPATH", ""),
