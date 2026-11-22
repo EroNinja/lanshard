@@ -72,3 +72,26 @@ def test_measure_link_recovers_the_bandwidth():
     fast = measure_link(addr, 8192, 10)["mbps"]
     assert fast is None or fast > 1000  # loopback: no limit worth modelling
     echo.lsock.close()
+
+
+def test_netem_rate_is_link_occupancy():
+    """Five 25 KB messages on a 2 Mbps link take 0.1 s each, one after the other."""
+    got, ev = [], threading.Event()
+
+    def on(h, t):
+        got.append(time.perf_counter())
+        if len(got) == 5:
+            ev.set()
+
+    srv = T.serve("tcp", "127.0.0.1", 0, on)
+    s = T.connect("tcp", f"127.0.0.1:{srv.port}", T.NetemProfile(rate_mbps=2.0))
+    t0 = time.perf_counter()
+    try:
+        for _ in range(5):
+            s.send({}, torch.zeros(25_000, dtype=torch.uint8))
+        assert ev.wait(30)
+    finally:
+        s.close()
+        srv.close()
+    assert got[0] - t0 == pytest.approx(0.1, abs=0.05)
+    assert got[-1] - t0 == pytest.approx(0.5, abs=0.08)

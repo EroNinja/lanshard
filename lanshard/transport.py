@@ -401,7 +401,8 @@ class NetemProfile:
     def active(self) -> bool:
         return bool(self.base_ms or self.jitter_ms or self.spike_prob or self.rate_mbps or self.samples_ms)
 
-    def delay_s(self, nbytes: int) -> float:
+    def latency_s(self) -> float:
+        """Propagation part of the delay: base + jitter + occasional spike."""
         r = self._rng
         if self.samples_ms:
             d = r.choice(self.samples_ms)
@@ -409,9 +410,15 @@ class NetemProfile:
             d = self.base_ms + abs(r.gauss(0.0, self.jitter_ms)) if self.jitter_ms else self.base_ms
             if self.spike_prob and r.random() < self.spike_prob:
                 d += self.spike_ms
-        if self.rate_mbps:
-            d += nbytes * 8 / (self.rate_mbps * 1e6) * 1e3
         return d / 1e3
+
+    def transfer_s(self, nbytes: int) -> float:
+        """Time the link is busy sending ``nbytes`` at ``rate_mbps``."""
+        return nbytes * 8 / (self.rate_mbps * 1e6) if self.rate_mbps else 0.0
+
+    def delay_s(self, nbytes: int) -> float:
+        """One-way delay of a single message on an idle link."""
+        return self.latency_s() + self.transfer_s(nbytes)
 
     @classmethod
     def from_spec(cls, spec: Optional[str]) -> "NetemProfile":
@@ -433,20 +440,27 @@ class NetemProfile:
 
 
 class DelayedSender(Sender):
-    """Applies a NetemProfile to an inner sender while preserving FIFO order."""
+    """Applies a NetemProfile to an inner sender while preserving FIFO order.
+
+    The link sends one message at a time, as ``tc netem rate`` does: a message starts when the
+    previous one has left, takes size / rate to send, then the latency. A large prefill chunk
+    therefore holds back the decode tokens queued behind it on the same link.
+    """
 
     def __init__(self, inner: Sender, profile: NetemProfile):
         self.inner, self.profile = inner, profile
         self.stats = inner.stats
         self.q: "queue.Queue" = queue.Queue()
         self._last_due = 0.0
+        self._link_free = 0.0  # when the previous message finishes sending
         self.enqueued = 0
         threading.Thread(target=self._pump, daemon=True).start()
 
     def send(self, header, tensor=None):
         self.enqueued += 1
         nbytes = (tensor.numel() * tensor.element_size()) if tensor is not None else 0
-        due = max(time.perf_counter() + self.profile.delay_s(nbytes), self._last_due)
+        self._link_free = max(time.perf_counter(), self._link_free) + self.profile.transfer_s(nbytes)
+        due = max(self._link_free + self.profile.latency_s(), self._last_due)
         self._last_due = due
         if tensor is not None and tensor.device.type != "cpu":
             tensor = tensor.cpu()
