@@ -1,0 +1,104 @@
+{
+ "n_requests": 40,
+ "wall_s": 2422.287373304367,
+ "gen_tokens": 5848,
+ "throughput_tok_s": 2.41424699003506,
+ "per_request_tok_s": 0.9251792402626382,
+ "ttft_ms": {
+  "p50": 33060.500144958496,
+  "p95": 2291567.5493597984,
+  "p99": 2292649.297194481
+ },
+ "tpot_ms": {
+  "p50": 445.47689215371696,
+  "p95": 28036.629723911876,
+  "p99": 35596.36820809261
+ },
+ "itl_ms": {
+  "p50": 373.3355,
+  "p95": 1204.48995,
+  "p99": 1665.111
+ },
+ "decode_mb": {
+  "n": 1045,
+  "mean_size": 5.557894736842106,
+  "loop_ms_p50": 314.9699000059627,
+  "compute_ms_p50": 216.594,
+  "network_ms_p50": 17.626599930062937,
+  "deser_ms_p50": 0.21310002462565897,
+  "queue_ms_p50": 46.305
+ },
+ "nodes": {
+  "cpu-only": {
+   "busy_frac": 0.035260120755323796,
+   "bubble_ratio": 0.9647398792446762,
+   "peak_alloc_gb": 0.0,
+   "rss_gb": 1.7173690795898438,
+   "n_layers": 5
+  },
+  "gpu-slow": {
+   "busy_frac": 0.037302082811214506,
+   "bubble_ratio": 0.9626979171887855,
+   "peak_alloc_gb": 0.8045139312744141,
+   "rss_gb": 1.4038734436035156,
+   "n_layers": 7
+  },
+  "gpu-fast": {
+   "busy_frac": 0.036336846500092335,
+   "bubble_ratio": 0.9636631534999076,
+   "peak_alloc_gb": 1.7267265319824219,
+   "rss_gb": 1.2232131958007812,
+   "n_layers": 16
+  }
+ },
+ "plan": "v1 latency: gpu-fast[0:16]=50.5ms -> gpu-slow[16:23]=46.7ms -> cpu-only[23:28]=43.7ms | bottleneck 50.5ms",
+ "mean_bubble_ratio": 0.9637003166444564,
+ "config": {
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "preset": "hetero3",
+  "worker": [],
+  "policy": "latency",
+  "transport": "tcp",
+  "no_drift": true,
+  "coord_netem": "wifi",
+  "rate": 1.5,
+  "n": 40,
+  "warmup": 4,
+  "seed": 2,
+  "sharegpt": null,
+  "min_prompt": 100,
+  "max_prompt": 1000,
+  "prompt_median": 300.0,
+  "min_out": 50,
+  "max_out": 300,
+  "out_median": 120.0,
+  "kv_budget": 16384,
+  "prefill_chunk": 512,
+  "max_decode_mb": 16,
+  "depth": null,
+  "profile_budget": 8.0,
+  "overhead_gb": 0.3,
+  "repeat": 2,
+  "out": null
+ },
+ "workers": [
+  {
+   "node_id": "gpu-fast",
+   "mem_limit_gb": 2.0,
+   "netem": "wifi"
+  },
+  {
+   "node_id": "gpu-slow",
+   "slowdown": 2.0,
+   "mem_limit_gb": 1.5,
+   "netem": "wifi"
+  },
+  {
+   "node_id": "cpu-only",
+   "device": "cpu",
+   "slowdown": 1.5,
+   "mem_limit_gb": 1.6,
+   "netem": "wifi"
+  }
+ ]
+}

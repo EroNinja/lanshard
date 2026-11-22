@@ -1,0 +1,3 @@
+2026-11-21 15:38:38,381 [cpu-only] INFO joined 127.0.0.1:51738 as cpu-only (CPU, cpu)
+2026-11-21 15:38:38,552 [cpu-only] INFO profiling one layer of Qwen/Qwen2.5-1.5B-Instruct for 8s
+2026-11-21 15:39:28,904 [cpu-only] INFO plan v1 ready: layers 0-5 (loaded 6 in 1.1s)

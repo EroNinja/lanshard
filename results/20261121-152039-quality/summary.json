@@ -1,0 +1,55 @@
+{
+ "model": "Qwen/Qwen2.5-1.5B-Instruct",
+ "plan": "v1 latency: gpu-slow[0:7]=50.2ms -> cpu-only[7:12]=45.7ms -> gpu-fast[12:28]=50.5ms | bottleneck 50.5ms",
+ "config": {
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "exact": 50,
+  "exact_tokens": 128,
+  "mmlu": 300,
+  "gsm8k": 60,
+  "gsm8k_tokens": 320,
+  "preset": "hetero3-lan",
+  "transport": "tcp"
+ },
+ "exact": {
+  "n": 50,
+  "exact_match": 0.92,
+  "first_divergence_tokens": [
+   17,
+   17,
+   117,
+   24
+  ]
+ },
+ "mmlu": {
+  "n": 300,
+  "exact_match": 0.9866666666666667,
+  "first_divergence_tokens": [
+   0,
+   2,
+   1,
+   1
+  ],
+  "acc_b1": 0.6233333333333333,
+  "acc_lanshard": 0.62,
+  "answer_agreement": 0.9966666666666667
+ },
+ "gsm8k": {
+  "n": 60,
+  "exact_match": 0.85,
+  "first_divergence_tokens": [
+   120,
+   6,
+   42,
+   65,
+   58,
+   4,
+   89,
+   222,
+   148
+  ],
+  "acc_b1": 0.5,
+  "acc_lanshard": 0.5,
+  "answer_agreement": 0.9166666666666666
+ }
+}

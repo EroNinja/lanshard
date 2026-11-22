@@ -1,0 +1,3 @@
+2026-11-21 14:19:01,505 [gpu-b] INFO joined 127.0.0.1:53893 as gpu-b (NVIDIA GeForce RTX 4060 Laptop GPU, cuda)
+2026-11-21 14:19:01,526 [gpu-b] INFO profiling one layer of Qwen/Qwen2.5-1.5B-Instruct for 8s
+2026-11-21 14:19:49,158 [gpu-b] INFO plan v1 ready: layers 0-9 (loaded 10 in 1.1s)
