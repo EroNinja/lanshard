@@ -319,8 +319,11 @@ class Worker:
             faulthandler.dump_traceback_later(60, repeat=False, file=sys.stdout)
             try:
                 self._process(h, x)
-            except Exception:
+            except Exception as e:
+                # the micro-batch is dropped here; tell the coordinator, whose only other signal
+                # is the retransmit timeout
                 log.exception("micro-batch %s failed", h.get("mb"))
+                self.ctrl.send({"type": "error", "node_id": self.node_id, "error": repr(e), "for": f"mb {h.get('mb')}"})
             finally:
                 faulthandler.cancel_dump_traceback_later()
 
