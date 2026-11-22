@@ -95,3 +95,52 @@ def test_netem_rate_is_link_occupancy():
         srv.close()
     assert got[0] - t0 == pytest.approx(0.1, abs=0.05)
     assert got[-1] - t0 == pytest.approx(0.5, abs=0.08)
+
+
+def _wait_until(pred, timeout=10.0):
+    end = time.time() + timeout
+    while time.time() < end:
+        if pred():
+            return True
+        time.sleep(0.02)
+    return False
+
+
+def test_tcp_sender_reconnects_after_the_link_breaks():
+    got = []
+    srv = T.serve("tcp", "127.0.0.1", 0, lambda h, t: got.append(h["i"]))
+    s = T.connect("tcp", f"127.0.0.1:{srv.port}", asynchronous=False)
+    try:
+        s.send({"i": 0})
+        assert _wait_until(lambda: got == [0])
+        srv.close()  # the peer goes away (restart, Wi-Fi drop) and comes back on the same address
+        srv = T.serve("tcp", "127.0.0.1", srv.port, lambda h, t: got.append(h["i"]))
+        for i in range(1, 6):  # a send or two can be lost in the reset; the link must then recover
+            try:
+                s.send({"i": i})
+            except OSError:
+                pass
+            time.sleep(0.05)
+        assert _wait_until(lambda: 5 in got)
+    finally:
+        s.close()
+        srv.close()
+
+
+def test_grpc_sender_reports_a_broken_stream():
+    srv = T.serve("grpc", "127.0.0.1", 0, lambda h, t: None)
+    s = T.connect("grpc", f"127.0.0.1:{srv.port}", asynchronous=False)
+    try:
+        s.send({"i": 0})
+        srv.close()
+
+        def send_fails():
+            try:
+                s.send({"i": 1})
+            except ConnectionError:
+                return True
+            return False
+
+        assert _wait_until(send_fails)  # used to queue messages forever with no error
+    finally:
+        s.close()

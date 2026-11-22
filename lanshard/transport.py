@@ -17,6 +17,7 @@ of one-way links, so the three backends are compared on identical traffic.
 from __future__ import annotations
 
 import json
+import logging
 import queue
 import random
 import socket
@@ -30,6 +31,7 @@ import torch
 
 from .timing import precise_sleep
 
+log = logging.getLogger("lanshard.transport")
 OnMessage = Callable[[dict, Optional[torch.Tensor]], None]
 
 _DT = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32,
@@ -69,6 +71,16 @@ def free_port() -> int:
     p = s.getsockname()[1]
     s.close()
     return p
+
+
+def _close(sock: socket.socket):
+    """Close a socket that another thread may be blocked on (accept or recv).
+    A plain close leaves that thread waiting, and on Linux keeps a listening port bound."""
+    for op in (lambda: sock.shutdown(socket.SHUT_RDWR), sock.close):
+        try:
+            op()
+        except OSError:
+            pass
 
 
 def _recv_exact(sock: socket.socket, n: int) -> bytearray:
@@ -116,19 +128,36 @@ _FRAME = struct.Struct("!IQ")
 class TcpSender(Sender):
     def __init__(self, address: str):
         host, port = address.rsplit(":", 1)
-        self.sock = socket.create_connection((host, int(port)))
-        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        self.peer = (host, int(port))
+        self._connect()
         self.lock = threading.Lock()
         self.stats = LinkStats()
+
+    def _connect(self):
+        self.sock = socket.create_connection(self.peer, timeout=10)
+        self.sock.settimeout(None)
+        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+    def _write(self, hb: bytes, payload):
+        self.sock.sendall(_FRAME.pack(len(hb), len(payload)) + hb)
+        if len(payload):
+            self.sock.sendall(payload)
 
     def send(self, header, tensor=None):
         t0 = time.perf_counter()
         hb, payload = pack(header, tensor)
         t1 = time.perf_counter()
         with self.lock:
-            self.sock.sendall(_FRAME.pack(len(hb), len(payload)) + hb)
-            if len(payload):
-                self.sock.sendall(payload)
+            try:
+                self._write(hb, payload)
+            except OSError as e:
+                # The link was reset (Wi-Fi drop, peer restart). Reconnect once and resend this
+                # message; the receiver discards the partial frame with the old connection.
+                # Messages lost before the reset was noticed are retransmitted by the coordinator.
+                log.warning("tcp link to %s:%d broke (%r), reconnecting", *self.peer, e)
+                _close(self.sock)
+                self._connect()
+                self._write(hb, payload)
         t2 = time.perf_counter()
         s = self.stats
         s.msgs += 1
@@ -138,10 +167,7 @@ class TcpSender(Sender):
         return (t1 - t0) * 1e3
 
     def close(self):
-        try:
-            self.sock.close()
-        except OSError:
-            pass
+        _close(self.sock)
 
 
 class TcpServer(Server):
@@ -154,6 +180,7 @@ class TcpServer(Server):
         self.port = self.lsock.getsockname()[1]
         self.address = f"{_advertise(host)}:{self.port}"
         self._closed = False
+        self.conns: set = set()
         threading.Thread(target=self._accept, daemon=True).start()
 
     def _accept(self):
@@ -166,6 +193,7 @@ class TcpServer(Server):
             threading.Thread(target=self._serve, args=(c,), daemon=True).start()
 
     def _serve(self, c: socket.socket):
+        self.conns.add(c)
         try:
             while True:
                 hl, pl = _FRAME.unpack(_recv_exact(c, _FRAME.size))
@@ -178,22 +206,17 @@ class TcpServer(Server):
                 header["_recv_ms"] = (t0 - t_arrive) * 1e3
                 self.on_message(header, tensor)
         except (ConnectionError, OSError) as e:
-            import logging
-
-            logging.getLogger("lanshard.transport").info("tcp link closed: %r", e)
+            log.info("tcp link closed: %r", e)
         except Exception:
-            import logging
-
-            logging.getLogger("lanshard.transport").exception("tcp receive failed")
+            log.exception("tcp receive failed")
         finally:
+            self.conns.discard(c)
             c.close()
 
     def close(self):
         self._closed = True
-        try:
-            self.lsock.close()
-        except OSError:
-            pass
+        for sock in (self.lsock, *list(self.conns)):
+            _close(sock)
 
 
 # --------------------------------------------------------------------------- gRPC
@@ -216,10 +239,19 @@ class GrpcSender(Sender):
         call = self.channel.stream_unary(_GRPC_METHOD, request_serializer=lambda b: b,
                                          response_deserializer=lambda b: b)
         self.q: "queue.Queue[Optional[bytes]]" = queue.Queue()
+        self.broken: Optional[str] = None
         self.future = call.future(iter(self.q.get, None))
+        self.future.add_done_callback(self._stream_ended)
         self.stats = LinkStats()
 
+    def _stream_ended(self, fut):
+        # the stream only ends when we close it or the link fails; without this a failed stream
+        # keeps accepting messages into the queue and nothing is ever sent or reported
+        self.broken = f"grpc stream ended: {fut.code() if hasattr(fut, 'code') else fut}"
+
     def send(self, header, tensor=None):
+        if self.broken:
+            raise ConnectionError(self.broken)
         t0 = time.perf_counter()
         hb, payload = pack(header, tensor)
         msg = _grpc_encode(hb, payload)  # protobuf encode (+ copy of the payload)
@@ -367,8 +399,8 @@ class GlooServer(Server):
                 header["_deser_ms"] = (time.perf_counter() - t0) * 1e3
                 header["_recv_ms"] = (t0 - t_arrive) * 1e3
                 self.on_message(header, tensor)
-        except Exception:
-            return
+        except Exception as e:
+            log.info("gloo link closed: %r", e)
 
     def close(self):
         try:
@@ -477,9 +509,7 @@ class DelayedSender(Sender):
             try:
                 self.inner.send(header, tensor)
             except Exception:
-                import logging
-
-                logging.getLogger("lanshard.transport").exception("delayed send failed (mb %s)", header.get("mb"))
+                log.exception("delayed send failed (mb %s)", header.get("mb"))
 
     def close(self):
         self.q.put(None)
@@ -509,9 +539,7 @@ class AsyncSender(Sender):
             try:
                 self.inner.send(*item)
             except Exception:
-                import logging
-
-                logging.getLogger("lanshard.transport").exception("async send failed (mb %s)", item[0].get("mb"))
+                log.exception("async send failed (mb %s)", item[0].get("mb"))
 
     def close(self):
         self.q.put(None)
