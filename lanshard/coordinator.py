@@ -12,10 +12,16 @@ measured online). Prefill goes in separate large chunks with its own slots, so
 a long prompt never inflates decode TPOT by riding in a decode batch.
 
 Repartitioning (I3): workers report a rolling median of observed/expected
-stage time. When a node drifts past ``threshold`` for ``sustain_s`` (or leaves),
-the planner re-runs with that node's layer time scaled; new layers are staged
-in the background, then admission switches to the new plan while in-flight
-requests drain on the old one. Nothing is migrated or recomputed.
+stage time. When a node drifts past ``threshold`` for ``sustain_s``, the planner
+re-runs with that node's layer time scaled and the switch is taken only if it
+pays for itself (``_choose_plan``). New layers are staged in the background,
+then admission switches to the new plan. In-flight requests with enough tokens
+left are moved by re-prefilling their text on the new plan; the rest drain on
+the old one.
+
+Failures: a node that closes its control socket or stops reporting is treated as
+lost. Its requests are requeued with their text so far, and ``_ensure_servable``
+installs a plan over the remaining nodes or fails the requests if none fits.
 """
 from __future__ import annotations
 
@@ -350,7 +356,8 @@ class Coordinator:
         for n in nodes:
             n.profile = n.error = None
             n.conn.send({"type": "profile", "model": self.model, "budget_s": self.profile_budget_s})
-            self._wait(lambda: n.profile is not None or not n.alive or n.error, timeout, f"profile of {n.node_id}")
+            self._wait(lambda: n.profile is not None or not n.alive or n.error, timeout,
+                       f"profile of {n.node_id}")
             if n.error:
                 raise RuntimeError(f"worker {n.node_id} failed: {n.error}")
             if n.profile:
@@ -393,7 +400,8 @@ class Coordinator:
 
     def _link_kw(self) -> Dict:
         """What the planner needs to price link occupancy: one decode micro-batch per hop."""
-        payload = self.sched.planning_batch * self.cfg.hidden_size * torch.empty(0, dtype=self.wire_dtype).element_size()
+        value_bytes = torch.empty(0, dtype=self.wire_dtype).element_size()
+        payload = self.sched.planning_batch * self.cfg.hidden_size * value_bytes
         return {"payload_bytes": payload, "bandwidth_mbps": self.bandwidth_matrix()}
 
     # ================================================================ planning
@@ -734,6 +742,11 @@ class Coordinator:
         """A suspended laptop or a dropped Wi-Fi link leaves the control socket open, so the
         read never ends. Treat a node that has been silent for too long as lost."""
         now = time.time()
+        # if this process was itself stalled (suspend, a long GIL hold), the reports are still
+        # unread in the sockets: give the readers one round before judging anyone
+        stalled, self._last_hb_check = now - getattr(self, "_last_hb_check", now) > 5.0, now
+        if stalled:
+            return
         for n in self.alive_nodes():
             if now - n.last_seen > self.heartbeat_timeout_s:
                 self.event("heartbeat_timeout", node=n.node_id, silent_s=round(now - n.last_seen, 1))
