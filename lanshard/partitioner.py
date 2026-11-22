@@ -92,15 +92,22 @@ class InfeasibleError(RuntimeError):
     pass
 
 
+def xfer_ms(bandwidth_mbps, a: str, b: str, payload_bytes: int) -> float:
+    """Link occupancy: how long the link a -> b is busy sending one planning payload.
+
+    ``bandwidth_mbps`` is one number for every link or a measured ``{a: {b: mbps}}`` matrix;
+    a link that is missing from the matrix counts as unlimited.
+    """
+    mbps = bandwidth_mbps.get(a, {}).get(b) if isinstance(bandwidth_mbps, dict) else bandwidth_mbps
+    return payload_bytes * 8 / (mbps * 1e6) * 1e3 if mbps else 0.0
+
+
 def hop_ms(rtt: Dict[str, Dict[str, float]], a: str, b: str, payload_bytes: int = 0,
-           bandwidth_mbps: float = 0.0) -> float:
+           bandwidth_mbps=0.0) -> float:
     r = rtt.get(a, {}).get(b)
     if r is None:
         r = rtt.get(b, {}).get(a, 0.0)
-    t = r / 2.0
-    if bandwidth_mbps:
-        t += payload_bytes * 8 / (bandwidth_mbps * 1e6) * 1e3
-    return t
+    return r / 2.0 + xfer_ms(bandwidth_mbps, a, b, payload_bytes)
 
 
 def _dp_fixed_order(order: Sequence[NodeSpec], L: int, rtts: Sequence[float], xfers: Sequence[float],
@@ -179,7 +186,7 @@ def _dp_fixed_order(order: Sequence[NodeSpec], L: int, rtts: Sequence[float], xf
 
 def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, Dict[str, float]],
                      version: int = 1, search_order: bool = True, payload_bytes: int = 0,
-                     bandwidth_mbps: float = 0.0, coord_ms: float = 0.0, hop_mode: str = "overlap",
+                     bandwidth_mbps=0.0, coord_ms: float = 0.0, hop_mode: str = "overlap",
                      current: Optional[Dict[str, tuple]] = None) -> Plan:
     t0 = time.perf_counter()
     best = None
@@ -191,8 +198,8 @@ def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, 
     def one_way(a, b):
         return hop_ms(rtt, a, b)
 
-    def xfer(_a, _b):
-        return payload_bytes * 8 / (bandwidth_mbps * 1e6) * 1e3 if bandwidth_mbps else 0.0
+    def xfer(a, b):
+        return xfer_ms(bandwidth_mbps, a, b, payload_bytes)
 
     feasible = []  # (bottleneck, order, rtts, xfers, first hop)
     for order in orders:
@@ -232,8 +239,9 @@ def latency_balanced(nodes: Sequence[NodeSpec], num_layers: int, rtt: Dict[str, 
                 meta={"orders_searched": search_order, "hop_mode": hop_mode, "staged": current is not None})
 
 
-def plan_cost(plan: "Plan", specs: Sequence[NodeSpec], rtt: Dict, hop_mode: str = "overlap") -> float:
-    """Bottleneck of an existing plan under (possibly updated) node specs."""
+def plan_cost(plan: "Plan", specs: Sequence[NodeSpec], rtt: Dict, hop_mode: str = "overlap",
+              payload_bytes: int = 0, bandwidth_mbps=0.0) -> float:
+    """Bottleneck of an existing plan under (possibly updated) node specs, same model as the DP."""
     by = {s.node_id: s for s in specs}
     worst = 0.0
     for i, st in enumerate(plan.stages):
@@ -242,12 +250,13 @@ def plan_cost(plan: "Plan", specs: Sequence[NodeSpec], rtt: Dict, hop_mode: str 
             return math.inf
         comp = st.n * n.t_layer_ms
         nxt = plan.stages[i + 1].node_id if i + 1 < len(plan.stages) else COORD
-        worst = max(worst, comp + hop_ms(rtt, st.node_id, nxt) if hop_mode == "additive" else comp)
+        worst = max(worst, comp + hop_ms(rtt, st.node_id, nxt) if hop_mode == "additive"
+                    else max(comp, xfer_ms(bandwidth_mbps, st.node_id, nxt, payload_bytes)))
     return worst
 
 
 def memory_proportional(nodes: Sequence[NodeSpec], num_layers: int, rtt: Optional[Dict] = None,
-                        version: int = 1, payload_bytes: int = 0, bandwidth_mbps: float = 0.0,
+                        version: int = 1, payload_bytes: int = 0, bandwidth_mbps=0.0,
                         coord_ms: float = 0.0) -> Plan:
     """B2: split by free memory in join order (what exo / llama.cpp RPC do)."""
     t0 = time.perf_counter()

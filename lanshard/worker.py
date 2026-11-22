@@ -87,6 +87,17 @@ def measure_rtt(address: str, payload: int = 8192, n: int = 20, netem: Optional[
             "p90": samples[int(len(samples) * 0.9)], "samples": samples}
 
 
+def measure_link(address: str, payload: int = 8192, n: int = 20, netem: Optional[T.NetemProfile] = None,
+                 big: int = 1 << 18) -> Dict:
+    """RTT at the decode payload, plus the link's bandwidth from how much longer a large echo takes."""
+    small = measure_rtt(address, payload, n, netem)["median"]
+    large = measure_rtt(address, big, max(5, n // 2), netem)["median"]
+    extra_ms = large - small  # the echo carries the extra bytes both ways
+    # under 0.2 ms the difference is noise (loopback, wired): report no limit
+    mbps = 2 * (big - payload) * 8 / (extra_ms * 1e3) if extra_ms > 0.2 else None
+    return {"rtt": small, "mbps": mbps}
+
+
 # --------------------------------------------------------------------------- worker
 class Worker:
     def __init__(self, coordinator: str, node_id: Optional[str] = None, device: Optional[str] = None,
@@ -203,16 +214,17 @@ class Worker:
 
     def _do_ping(self, msg):
         payload = int(msg.get("payload", 8192))
-        out = {}
+        out, mbps = {}, {}
         for nid, addr in msg["peers"].items():
             if nid == self.node_id:
                 continue
             try:
-                out[nid] = measure_rtt(addr, payload, int(msg.get("n", 20)), self.netem)["median"]
+                m = measure_link(addr, payload, int(msg.get("n", 20)), self.netem)
+                out[nid], mbps[nid] = m["rtt"], m["mbps"]
             except OSError as e:
                 out[nid] = None
                 log.warning("ping %s failed: %s", nid, e)
-        self.ctrl.send({"type": "rtt", "node_id": self.node_id, "rtt": out})
+        self.ctrl.send({"type": "rtt", "node_id": self.node_id, "rtt": out, "mbps": mbps})
 
     def _do_prepare(self, msg):
         plan = Plan.from_dict(msg["plan"])

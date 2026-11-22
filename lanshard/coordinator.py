@@ -39,8 +39,8 @@ import torch
 
 from . import transport as T
 from .model_utils import HeadModules, Segment, default_device, default_dtype, load_config, parse_dtype, resolve_model_dir
-from .partitioner import COORD, InfeasibleError, Plan, make_plan, node_specs_from_profiles
-from .worker import EchoServer, measure_rtt
+from .partitioner import COORD, InfeasibleError, Plan, make_plan, node_specs_from_profiles, plan_cost
+from .worker import EchoServer, measure_link
 
 log = logging.getLogger("lanshard.coordinator")
 REQUEUE = -1  # Request.migrate_to sentinel: return to the queue instead of moving to a plan
@@ -127,6 +127,7 @@ class Node:
     echo_addr: str
     profile: Optional[Dict] = None
     rtt: Dict[str, float] = field(default_factory=dict)
+    mbps: Dict[str, float] = field(default_factory=dict)  # measured bandwidth to each peer
     alive: bool = True
     stats: Optional[Dict] = None
     baseline: Optional[float] = None
@@ -293,6 +294,7 @@ class Coordinator:
                     node.info["mem_free"] = min(node.info["mem_free"], msg.get("mem_free", node.info["mem_free"]))
                 elif t == "rtt":
                     node.rtt = {k: v for k, v in msg["rtt"].items() if v is not None}
+                    node.mbps = {k: v for k, v in msg.get("mbps", {}).items() if v}
                 elif t == "ready":
                     node.ready_versions.add(msg["version"])
                     self.event("node_ready", node=node.node_id, version=msg["version"],
@@ -360,21 +362,35 @@ class Coordinator:
         for n in nodes:
             n.rtt = {}
             n.conn.send({"type": "ping_peers", "peers": peers, "payload": self.rtt_payload})
-        coord_rtt = {}
+        coord_rtt, coord_mbps = {}, {}
         for n in nodes:
             try:
-                coord_rtt[n.node_id] = measure_rtt(n.echo_addr, self.rtt_payload, 20, self.netem)["median"]
+                m = measure_link(n.echo_addr, self.rtt_payload, 20, self.netem)
+                coord_rtt[n.node_id] = m["rtt"]
+                if m["mbps"]:
+                    coord_mbps[n.node_id] = m["mbps"]
             except OSError:
                 pass
         self._wait(lambda: all(n.rtt or not n.alive for n in nodes), timeout, "rtt reports")
-        self.coord_rtt = coord_rtt
-        self.event("rtt", matrix=self.rtt_matrix())
+        self.coord_rtt, self.coord_mbps = coord_rtt, coord_mbps
+        self.event("rtt", matrix=self.rtt_matrix(), mbps=self.bandwidth_matrix())
 
     def rtt_matrix(self) -> Dict[str, Dict[str, float]]:
         m = {COORD: dict(getattr(self, "coord_rtt", {}))}
         for n in self.alive_nodes():
             m[n.node_id] = {k: round(v, 3) for k, v in n.rtt.items()}
         return m
+
+    def bandwidth_matrix(self) -> Dict[str, Dict[str, float]]:
+        m = {COORD: dict(getattr(self, "coord_mbps", {}))}
+        for n in self.alive_nodes():
+            m[n.node_id] = {k: round(v, 1) for k, v in n.mbps.items()}
+        return m
+
+    def _link_kw(self) -> Dict:
+        """What the planner needs to price link occupancy: one decode micro-batch per hop."""
+        payload = self.sched.planning_batch * self.cfg.hidden_size * torch.empty(0, dtype=self.wire_dtype).element_size()
+        return {"payload_bytes": payload, "bandwidth_mbps": self.bandwidth_matrix()}
 
     # ================================================================ planning
     def _specs(self, policy: str, exclude: set):
@@ -396,12 +412,13 @@ class Coordinator:
         kw = {}
         if current is not None and policy.startswith("latency"):
             kw["current"] = {st.node_id: (st.start, st.end) for st in current.stages if st.node_id not in exclude}
+        link = self._link_kw()
         try:
-            plan = make_plan(policy, specs, self.num_layers, self.rtt_matrix(), version, **kw)
+            plan = make_plan(policy, specs, self.num_layers, self.rtt_matrix(), version, **link, **kw)
         except InfeasibleError:
             if not kw:
                 raise
-            plan = make_plan(policy, specs, self.num_layers, self.rtt_matrix(), version)
+            plan = make_plan(policy, specs, self.num_layers, self.rtt_matrix(), version, **link)
         plan.meta.update(scale=dict(self.scale), specs=[asdict(s) for s in specs])
         log.info("planned %s (%.2f ms to plan)", plan.summary(), plan.plan_time_ms)
         return plan
@@ -642,15 +659,13 @@ class Coordinator:
         Throughput is taken as proportional to 1 / bottleneck. A plan that needs a pause earns
         nothing for the estimated pause (the last measured one, else ``pause_estimate_s``).
         """
-        from .partitioner import plan_cost
-
         H = self.drift.horizon_s
         specs = self._specs(self.policy, set())
         rtt = self.rtt_matrix()
         staged = self.compute_plan(self.policy, current=cur)
         free = self.compute_plan(self.policy)
         hop_mode = staged.meta.get("hop_mode", "overlap")
-        now_ms = plan_cost(cur, specs, rtt, hop_mode)
+        now_ms = plan_cost(cur, specs, rtt, hop_mode, **self._link_kw())
         pause = self.last_pause_s if self.last_pause_s is not None else self.drift.pause_estimate_s
 
         def layout(p):
@@ -1193,6 +1208,7 @@ class Coordinator:
             json.dump([t - self.t_start for t in self.token_log], f)
         with open(os.path.join(out_dir, "run.json"), "w") as f:
             json.dump({"status": self.status(), "events": self.events, "rtt": self.rtt_matrix(),
+                       "mbps": self.bandwidth_matrix(),
                        "plans": {v: p.to_dict() for v, p in self.plans.items()},
                        "sched": asdict(self.sched), "drift": asdict(self.drift), **(extra or {})},
                       f, indent=1, default=str)

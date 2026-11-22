@@ -59,3 +59,16 @@ def test_netem_spec_parsing():
     assert p.base_ms == 3 and p.jitter_ms == 2 and p.spike_ms == 30 and p.rate_mbps == 400
     assert T.NetemProfile.from_spec("wifi").active
     assert not T.NetemProfile.from_spec("none").active
+
+
+def test_measure_link_recovers_the_bandwidth():
+    from lanshard.worker import EchoServer, measure_link
+
+    echo = EchoServer("127.0.0.1")
+    addr = f"127.0.0.1:{echo.port}"
+    m = measure_link(addr, 8192, 10, T.NetemProfile(base_ms=2, rate_mbps=20, seed=0))
+    assert m["mbps"] == pytest.approx(20, rel=0.25)
+    assert m["rtt"] > 4
+    fast = measure_link(addr, 8192, 10)["mbps"]
+    assert fast is None or fast > 1000  # loopback: no limit worth modelling
+    echo.lsock.close()

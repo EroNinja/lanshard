@@ -157,3 +157,17 @@ def test_expected_layer_ms_interpolates():
     assert expected_layer_ms(prof, 3, 0) == pytest.approx(2.5)
     assert expected_layer_ms(prof, 16, 0) == pytest.approx(9.0)
     assert expected_layer_ms(prof, 0, 10) == pytest.approx(1.0)
+
+
+def test_slow_link_limits_a_stage_by_its_occupancy():
+    """A stage cannot emit micro-batches faster than its outbound link carries them."""
+    from lanshard.partitioner import plan_cost
+
+    nodes = [NodeSpec(n, 1.0, 8 * GB, 100 << 20) for n in ("a", "b", "c")]
+    slow = {"c": {"a": 8.0, "b": 8.0, COORD: 8.0}}  # Mbps; 16 KB takes 16 ms on c's links
+    p = latency_balanced(nodes, 24, {}, payload_bytes=16_000, bandwidth_mbps=slow)
+    assert sorted(s.node_id for s in p.stages) == ["a", "b"]  # 12 ms on two nodes beats 16 ms with c
+    assert p.bottleneck_ms == pytest.approx(12.0)
+    with_c = latency_balanced(nodes, 24, {})
+    assert plan_cost(with_c, nodes, {}) == pytest.approx(8.0)
+    assert plan_cost(with_c, nodes, {}, payload_bytes=16_000, bandwidth_mbps=slow) == pytest.approx(16.0)
